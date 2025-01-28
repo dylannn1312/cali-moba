@@ -1,0 +1,28 @@
+[package]
+name = "verifier"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+ic-cdk = { workspace = true }
+candid = { workspace = true }
+thiserror = { workspace = true }
+sha2 = { workspace = true }
+ark-bn254 = { workspace = true }
+ark-ff = { workspace = true }
+ark-std = { workspace = true }
+itertools = { workspace = true }
+num-bigint = { workspace = true }
+num-traits = { workspace = true }
+serde = { workspace = true }
+hex = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
