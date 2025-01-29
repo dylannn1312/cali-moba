@@ -6,13 +6,13 @@ use serde::{Deserialize, Serialize};
 pub type BaseField = Fq;
 pub type ScalarField = Fr;
 
-#[derive(Serialize, Deserialize, CandidType)]
+#[derive(Serialize, Deserialize, CandidType, Clone, Debug)]
 pub struct SP1ProofWithPublicValues {
     pub proof: SP1Proof,
     pub public_values: String,
 }
 
-#[derive(Serialize, Deserialize, CandidType)]
+#[derive(Serialize, Deserialize, CandidType, Clone, Debug)]
 pub enum SP1Proof {
     #[serde(rename = "groth16")]
     Groth16(String)

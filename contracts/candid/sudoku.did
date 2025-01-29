@@ -1,0 +1,41 @@
+type ContractError = variant {
+  InvalidProof : text;
+  InvalidSolution : text;
+  InvalidAction : text;
+};
+type GameSolution = variant {
+  Private : SP1ProofWithPublicValues;
+  Public : blob;
+};
+type GlobalState = record {
+  vk : text;
+  verifier : principal;
+  owner : principal;
+  owner_profit : nat;
+};
+type Result = variant { Ok : nat64; Err : ContractError };
+type Result_1 = variant { Ok : SudokuGame; Err : ContractError };
+type Result_2 = variant { Ok; Err : ContractError };
+type SP1Proof = variant { groth16 : text };
+type SP1ProofWithPublicValues = record {
+  public_values : text;
+  proof : SP1Proof;
+};
+type SudokuGame = record {
+  creator : principal;
+  initial_state : opt vec record { nat8; nat8 };
+  service_fee : nat;
+  winner : opt principal;
+  claimed : bool;
+  players : vec principal;
+  solution : opt GameSolution;
+  deposit_price : nat;
+};
+service : (text, principal) -> {
+  create_new_room : (nat, nat, principal) -> (Result);
+  get_global_state : () -> (GlobalState) query;
+  get_room_info : (nat64) -> (Result_1) query;
+  join_room : (nat64, principal) -> (Result_2);
+  start_game : (nat64, vec record { nat8; nat8 }) -> (Result_2);
+  submit_solution : (nat64, GameSolution) -> (Result_2);
+}

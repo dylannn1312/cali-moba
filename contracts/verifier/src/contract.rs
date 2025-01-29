@@ -79,7 +79,7 @@ thread_local! {
         });
 }
 
-#[ic_cdk::query]
+#[cfg_attr(not(feature = "library"), ic_cdk::query)]
 pub fn verify_proof(proof: SP1ProofWithPublicValues, program_vkey: String) -> Result<(), ContractError> {
     match proof.proof {
         SP1Proof::Groth16(proof_bytes) => {
@@ -121,6 +121,7 @@ pub fn verify_proof(proof: SP1ProofWithPublicValues, program_vkey: String) -> Re
     }
 }
 
+#[cfg(not(feature = "library"))]
 ic_cdk::export_candid!();
 
 #[cfg(test)]

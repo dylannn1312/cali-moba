@@ -1,0 +1,16 @@
+type ContractError = variant {
+  PairingFailed;
+  InvalidProof : text;
+  NotInBaseField : text;
+  Unknown : text;
+  ParseHex : text;
+  NotInScalarField : text;
+  PointNotOnCurve;
+};
+type Result = variant { Ok; Err : ContractError };
+type SP1Proof = variant { groth16 : text };
+type SP1ProofWithPublicValues = record {
+  public_values : text;
+  proof : SP1Proof;
+};
+service : { verify_proof : (SP1ProofWithPublicValues, text) -> (Result) query }

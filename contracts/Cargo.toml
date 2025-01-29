@@ -1,5 +1,5 @@
 [workspace]
-members = ["verifier"]
+members = ["verifier", "sudoku"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -15,6 +15,9 @@ itertools = "0.10.5"
 num-bigint = { version = "0.4.6", features = ["serde"] }
 num-traits = "0.2.19"
 hex = { version = "0.4.3", features = ["serde"] }
+verifier = { path = "verifier", features = ["library"] }
+icrc-ledger-types = "0.1.8"
+pocket-ic = "6.0.0"
 
 serde_json = "1.0.135"
 

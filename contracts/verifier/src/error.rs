@@ -1,6 +1,6 @@
-use candid::CandidType;
+use candid::{CandidType, Deserialize};
 
-#[derive(thiserror::Error, Debug, CandidType)]
+#[derive(thiserror::Error, Debug, CandidType, Deserialize)]
 pub enum ContractError {
     #[error("Unknown error: {0}")]
     Unknown(String),
