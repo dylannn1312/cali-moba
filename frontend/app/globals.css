@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+* {
+  caret-color: currentColor;
+}
+
+/* Swish Spinner */
+.wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ball {
+  position: absolute;
+  border-radius: 3px;
+  animation: ball-motion 0.9s ease infinite;
+  transition: all 0.3s ease;
+}
+
+@keyframes ball-motion {
+  50% {
+    transform: scale(0);
+    background-color: var(--backColor);
+  }
+}
+
+.ant-select-selector {
+  border-width: 2px !important;
+}
