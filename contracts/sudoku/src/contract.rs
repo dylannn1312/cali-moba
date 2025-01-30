@@ -142,7 +142,7 @@ async fn submit_solution(room_id: usize, solution: GameSolution) -> Result<(), C
             check_solution(&initial_state, solution)?;
         }
         GameSolution::Private(proof) => {
-            let (g, ): (Result<(), verifier::error::ContractError>,) = call(
+            let (g,): (Result<(), verifier::error::ContractError>,) = call(
                 verifier,
                 "verify_proof",
                 (proof, VK.with(|vk| vk.borrow().clone())),
@@ -170,8 +170,8 @@ ic_cdk::export_candid!();
 mod tests {
     use crate::error::ContractError;
     use crate::game::{GameSolution, SudokuGame};
-    use candid::{decode_args, decode_one, encode_args, encode_one, Decode, Principal};
-    use pocket_ic::{PocketIc, UserError, WasmResult};
+    use candid::{encode_args, encode_one, Decode, Principal};
+    use pocket_ic::{PocketIc, WasmResult};
     use std::str::FromStr;
     use verifier::types::{SP1Proof, SP1ProofWithPublicValues};
 
