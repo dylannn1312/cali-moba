@@ -17,6 +17,7 @@ const config: Config = {
       colors: {
         primary: THEME.PRIMARY_COLOR,
         secondary: THEME.SECONDARY_COLOR,
+        'light-secondary': THEME.LIGHT_SECONDARY_COLOR,
         text: THEME.TEXT_COLOR,
         button: THEME.BUTTON_COLOR,
         "button-hover": THEME.BUTTON_HOVER_COLOR,

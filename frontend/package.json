@@ -19,6 +19,7 @@
     "@dfinity/utils": "^2.10.0",
     "@nfid/identitykit": "^1.0.9",
     "antd": "^5.23.1",
+    "axios": "^1.7.9",
     "lighten-darken-color": "^1.0.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",

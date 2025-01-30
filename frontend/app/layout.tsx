@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${FONT.className} bg-[#FAFBF8] text-text px-60`}>
+      <body className={`${FONT.className} bg-secondary text-text px-60`}>
         <ConfigProvider
           theme={{
             token: {

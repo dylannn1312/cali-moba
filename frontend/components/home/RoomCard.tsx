@@ -19,7 +19,7 @@ export default function RoomCard({
     depositPrice
 }: RoomInfo) {
     return (
-        <div className="cursor-pointer rounded-xl shadow-lg flex flex-col pb-4 gap-4">
+        <div className="cursor-pointer rounded-xl shadow-lg flex flex-col pb-4 gap-4 bg-light-secondary">
             <div className="h-[250px] relative overflow-hidden rounded-t-xl border-b border-button">
                 <img
                     src={gameInfo.splashImg}
@@ -39,7 +39,7 @@ export default function RoomCard({
                 <HiddenCopyableText textToCopy={creator}>
                     <div className="text-muted">
                         <strong>Creator: </strong>
-                        {shortAddress(creator)}
+                        {shortAddress(creator, 11)}
                     </div>
                 </HiddenCopyableText>
                 <Text><strong>Deposit: </strong><span className="uppercase">{depositPrice} {process.env.DENOM}</span></Text>

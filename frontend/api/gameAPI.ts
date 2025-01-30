@@ -12,7 +12,7 @@ export class GameAPI {
         room_id: number
     }> {
         deposit_price *= 1_000_000;
-        let response = await httpService.post<any, any>("/games/new-room", {
+        let response = await httpService.post<any, any>("/games/new-battle", {
             deposit_price,
             creator
         });

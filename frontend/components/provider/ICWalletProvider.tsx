@@ -1,7 +1,6 @@
 'use client';
 
 import { HttpAgent } from "@dfinity/agent";
-import { NFIDW } from "@nfid/identitykit";
 import { IdentityKitProvider } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
 import { useEffect, useState } from "react";

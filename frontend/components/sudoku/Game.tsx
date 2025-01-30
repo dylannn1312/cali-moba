@@ -303,7 +303,7 @@ export const SudokuGame = ({
                   <Button className='py-5 text-muted' onClick={() => router.push('/')}>
                     Go to home
                   </Button>
-                  <Button type='primary' className='py-5' onClick={() => router.push('/new-room')}>
+                  <Button type='primary' className='py-5' onClick={() => router.push('/new-battle')}>
                     Play new game
                   </Button>
                 </div>
