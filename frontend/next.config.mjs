@@ -4,6 +4,7 @@ const nextConfig = {
         API_URL: process.env.API_URL,
         SUDOKU_CONTRACT: process.env.SUDOKU_CONTRACT,
         ICP_API_HOST: process.env.ICP_API_HOST,
+
     },
     images: {
         remotePatterns: [
@@ -13,10 +14,13 @@ const nextConfig = {
             },
         ],
     },
+    webpack: config => {
+        config.externals.push('pino-pretty', 'lokijs', 'encoding')
+        return config
+    },
     eslint: {
         ignoreDuringBuilds: true,
     },
-    // output: 'export'
 }
 
-module.exports = nextConfig
+export default nextConfig;
