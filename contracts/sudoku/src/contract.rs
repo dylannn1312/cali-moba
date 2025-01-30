@@ -79,6 +79,9 @@ fn join_room(room_id: usize, player: Principal) -> Result<(), ContractError> {
         if game.winner.is_some() {
             return Err(InvalidAction("the game is overed".to_string()));
         }
+        if game.initial_state.is_some() {
+            return Err(InvalidAction("the game is started".to_string()));
+        }
         if game.players.contains(&player) {
             return Err(InvalidAction("player already joined".to_string()));
         }
@@ -164,6 +167,7 @@ async fn submit_solution(room_id: usize, solution: GameSolution) -> Result<(), C
     Ok(())
 }
 
+#[cfg(not(feature = "library"))]
 ic_cdk::export_candid!();
 
 #[cfg(test)]
