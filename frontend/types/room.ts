@@ -1,23 +1,23 @@
 import { GameInfo } from "./game";
 
-export enum RoomStatus {
+export enum BattleStatus {
     Playing = "Playing",
     Pending = "Pending",
     Finished = "Finished"
 }
 
-export interface RoomInfo {
+export interface BattleInfo {
     idByGame: number;
     creator: string;
-    status: RoomStatus;
+    status: BattleStatus;
     playerCount: number;
     maxPlayers: number;
     gameInfo: Pick<GameInfo, "splashImg" | "name" | "slug">;
     depositPrice: number;
 }
 
-export const roomStatusColor: Record<RoomStatus, string> = {
-    [RoomStatus.Playing]: "#3DFFB9",
-    [RoomStatus.Pending]: "#11DAF4",
-    [RoomStatus.Finished]: "#BEC8C8"
+export const battleStatusColor: Record<BattleStatus, string> = {
+    [BattleStatus.Playing]: "#3DFFB9",
+    [BattleStatus.Pending]: "#11DAF4",
+    [BattleStatus.Finished]: "#BEC8C8"
 }

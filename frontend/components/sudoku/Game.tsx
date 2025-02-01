@@ -22,11 +22,11 @@ const { Title, Text } = Typography;
  * Game is the main React component.
  */
 export const SudokuGame = ({
-  room_id,
+  battle_id,
   onVerifySuccess,
   onClaimSuccess
 }: {
-  room_id: number;
+  battle_id: number;
   onVerifySuccess: (txHash: string) => void;
   onClaimSuccess: (txHash: string) => void
 }) => {
@@ -376,7 +376,7 @@ export const SudokuGame = ({
           process.env.SUDOKU_CONTRACT,
           {
             submit_solution: {
-              room_id,
+              battle_id,
               solution: {
                 public: solution
               }
@@ -416,7 +416,7 @@ export const SudokuGame = ({
           process.env.SUDOKU_CONTRACT,
           {
             submit_solution: {
-              room_id,
+              battle_id,
               solution: {
                 private: {
                   proof: {
@@ -456,7 +456,7 @@ export const SudokuGame = ({
           process.env.SUDOKU_CONTRACT,
           {
             claim_reward: {
-              room_id
+              battle_id
             }
           },
           calculateFee(200000, gasPrice),

@@ -18,14 +18,14 @@ import useSWR from "swr";
 
 const { Title, Text } = Typography;
 
-const allGames: Pick<GameInfo, 'name' | 'slug' | 'icon' | 'totalPrizePool' | 'largestPrizePool' | 'playingRooms' | 'contractAddress' | 'splashImg'>[] = [
+const allGames: Pick<GameInfo, 'name' | 'slug' | 'icon' | 'totalPrizePool' | 'largestPrizePool' | 'playingBattles' | 'contractAddress' | 'splashImg'>[] = [
     {
         name: "Sudoku",
         slug: "sudoku",
         icon: "https://brainium.com/wp-content/uploads/2021/11/sudoku-Mobile-hero-asset@2x.png",
         totalPrizePool: randInt(1000, 10000),
         largestPrizePool: 600,
-        playingRooms: randInt(3, 10),
+        playingBattles: randInt(3, 10),
         contractAddress: process.env.SUDOKU_CONTRACT,
         splashImg: "https://reactjsexample.com/content/images/2020/04/A-Sudoku-web-app-in-React.png"
     },
@@ -35,13 +35,13 @@ const allGames: Pick<GameInfo, 'name' | 'slug' | 'icon' | 'totalPrizePool' | 'la
         icon: "https://funhtml5games.com/sokoban/sokobon_trans.png",
         totalPrizePool: randInt(1000, 10000),
         largestPrizePool: 400,
-        playingRooms: randInt(3, 10),
+        playingBattles: randInt(3, 10),
         contractAddress: process.env.SUDOKU_CONTRACT,
         splashImg: "https://static.tvtropes.org/pmwiki/pub/images/sokoban_6694.png"
     }
 ];
 
-export default function NewRoomPage() {
+export default function NewBattlePage() {
     const {
         data: serviceFee,
         isLoading
@@ -55,14 +55,14 @@ export default function NewRoomPage() {
     const [maxPlayers, setMaxPlayers] = useState(0);
     const [difficulty, setDifficulty] = useState('Easy');
     const [selectedGame, setSelectedGame] = useState(0);
-    const [creatingRoom, setCreatingRoom] = useState(false);
-    const [joiningRoom, setJoiningRoom] = useState(false);
+    const [creatingBattle, setCreatingBattle] = useState(false);
+    const [joiningBattle, setJoiningBattle] = useState(false);
 
     return (
         <div className={"flex flex-col mt-8"}>
             <Title level={2} className="flex items-center cursor-pointer" onClick={() => router.back()}>
                 <ArrowLeftIcon color={THEME.PRIMARY_COLOR} />
-                Create your room
+                Create your battle
             </Title>
             <div className={"flex gap-8"}>
                 <div className={"flex flex-1 flex-col gap-4"}>
@@ -146,8 +146,8 @@ export default function NewRoomPage() {
                                 <Text strong className="uppercase">{depositPrice + (serviceFee ?? 0)}</Text>
                                 <Text className="uppercase text-muted">{process.env.TOKEN}</Text>
                             </div>
-                            <Button type="primary" className="w-full mt-3 h-[50px]" disabled={depositPrice === 0 || maxPlayers === 0 || creatingRoom || joiningRoom } onClick={handleConfirm}>
-                                <strong className="text-2xl text-text">{creatingRoom ? "Creating room..." : (joiningRoom ? "Joining room..." : "Confirm")}</strong>
+                            <Button type="primary" className="w-full mt-3 h-[50px]" disabled={depositPrice === 0 || maxPlayers === 0 || creatingBattle || joiningBattle } onClick={handleConfirm}>
+                                <strong className="text-2xl text-text">{creatingBattle ? "Creating battle..." : (joiningBattle ? "Joining battle..." : "Confirm")}</strong>
                             </Button>
                         </div>
                     </div>
@@ -202,8 +202,8 @@ export default function NewRoomPage() {
                                 <Text className="uppercase ">{process.env.TOKEN}</Text>
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
-                                <Text className="flex-1">Playing rooms: </Text>
-                                <Text className="text-green-600" strong>{allGames[selectedGame].playingRooms}</Text>
+                                <Text className="flex-1">Playing battles: </Text>
+                                <Text className="text-green-600" strong>{allGames[selectedGame].playingBattles}</Text>
                             </div>
                         </div>
                     </div>
@@ -220,30 +220,30 @@ export default function NewRoomPage() {
             //     toast.error("Please connect to your wallet first");
             // } else {
             //     const client = await getSigningCosmWasmClient();
-            //     setCreatingRoom(true);
-            //     GameAPI.createNewRoom(depositPrice, address).then(({room_id, tx_hash: createRoomTxHash}) => {
-            //         setCreatingRoom(false);
-            //         localStorage.setItem("createRoomTxHash", createRoomTxHash);
-            //         setJoiningRoom(true);
+            //     setCreatingBattle(true);
+            //     GameAPI.createNewBattle(depositPrice, address).then(({battle_id, tx_hash: createBattleTxHash}) => {
+            //         setCreatingBattle(false);
+            //         localStorage.setItem("createBattleTxHash", createBattleTxHash);
+            //         setJoiningBattle(true);
             //         return client.execute(
             //             address,
             //             allGames[selectedGame].contractAddress,
             //             {
-            //                 join_room: {
-            //                     room_id
+            //                 join_battle: {
+            //                     battle_id
             //                 }
             //             },
             //             calculateFee(200000, gasPrice),
             //             undefined,
             //             coins((depositPrice + serviceFee) * 1_000_000, `u${process.env.TOKEN}`)
             //         ).then((tx) => {
-            //             setJoiningRoom(false);
-            //             localStorage.setItem("joinRoomHash", tx.transactionHash);
-            //             router.push(`/games/sudoku/${room_id}`);
+            //             setJoiningBattle(false);
+            //             localStorage.setItem("joinBattleHash", tx.transactionHash);
+            //             router.push(`/games/sudoku/${battle_id}`);
             //         });
             //     })
             //     .catch((error) => {
-            //         setCreatingRoom(false);
+            //         setCreatingBattle(false);
             //         if (error instanceof Error) {
             //             toast.error(error.message);
             //         } else {

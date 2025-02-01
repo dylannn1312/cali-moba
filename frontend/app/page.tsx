@@ -1,10 +1,10 @@
 'use client';
 
 import SearchBar from "@/components/common/SearchBar/SearchBar";
-import RoomCard from "@/components/home/RoomCard";
+import BattleCard from "@/components/home/BattleCard";
 import ArrowDownIcon from "@/components/common/icons/ArrowDownIcon";
 import { GameInfo } from "@/types/game";
-import { RoomInfo, RoomStatus } from "@/types/room";
+import { BattleInfo, BattleStatus } from "@/types/battle";
 import { randInt } from "@/utils/math";
 import { Button, Checkbox, Typography } from "antd";
 import Image from "next/image";
@@ -14,24 +14,24 @@ import { ClientLogin, SetupModal } from "@calimero-network/calimero-client";
 
 const { Text } = Typography;
 
-const allGames: Pick<GameInfo, 'playingRooms' | 'icon' | 'name'>[] = [
+const allGames: Pick<GameInfo, 'playingBattles' | 'icon' | 'name'>[] = [
   {
     icon: "https://brainium.com/wp-content/uploads/2021/11/sudoku-Mobile-hero-asset@2x.png",
-    playingRooms: randInt(30, 100),
+    playingBattles: randInt(30, 100),
     name: "Sudoku"
   },
   {
     icon: "https://funhtml5games.com/sokoban/sokobon_trans.png",
-    playingRooms: randInt(30, 100),
+    playingBattles: randInt(30, 100),
     name: "Sokoban"
   }
 ]
 
-const allRooms: RoomInfo[] = [
+const allBattles: BattleInfo[] = [
   {
     idByGame: 1,
     creator: "wqfln-yypmj-vw5mk-psdyt-5mnmz-ypeiz-ly5gb-gzhz4-ulzg5-ylhel-uqe",
-    status: RoomStatus.Pending,
+    status: BattleStatus.Pending,
     playerCount: 2,
     maxPlayers: 4,
     gameInfo: {
@@ -44,7 +44,7 @@ const allRooms: RoomInfo[] = [
   {
     idByGame: 1,
     creator: "wqfln-yypmj-vw5mk-psdyt-5mnmz-ypeiz-ly5gb-gzhz4-ulzg5-ylhel-uqe",
-    status: RoomStatus.Finished,
+    status: BattleStatus.Finished,
     playerCount: 3,
     maxPlayers: 4,
     gameInfo: {
@@ -57,7 +57,7 @@ const allRooms: RoomInfo[] = [
   {
     idByGame: 2,
     creator: "wqfln-yypmj-vw5mk-psdyt-5mnmz-ypeiz-ly5gb-gzhz4-ulzg5-ylhel-uqe",
-    status: RoomStatus.Playing,
+    status: BattleStatus.Playing,
     playerCount: 2,
     maxPlayers: 4,
     gameInfo: {
@@ -93,7 +93,7 @@ const allRooms: RoomInfo[] = [
 //                   <Checkbox></Checkbox>
 //                   <Image src={game.icon} alt="" width={25} height={25} className="rounded-full" />
 //                   <Text className="flex-1 text-inherit uppercase">{game.name}</Text>
-//                   <Text className="text-inherit">{game.playingRooms}</Text>
+//                   <Text className="text-inherit">{game.playingBattles}</Text>
 //                 </div>
 //               ))
 //             }
@@ -104,10 +104,10 @@ const allRooms: RoomInfo[] = [
 //               <ArrowDownIcon />
 //             </div>
 //             {
-//               [RoomStatus.Playing, RoomStatus.Pending, RoomStatus.Finished].map((roomStatus) => (
-//                 <div className="flex items-center gap-2 text-muted cursor-pointer hover:text-text" key={roomStatus}>
+//               [BattleStatus.Playing, BattleStatus.Pending, BattleStatus.Finished].map((battleStatus) => (
+//                 <div className="flex items-center gap-2 text-muted cursor-pointer hover:text-text" key={battleStatus}>
 //                   <Checkbox></Checkbox>
-//                   <Text className="flex-1 text-inherit uppercase">{roomStatus}</Text>
+//                   <Text className="flex-1 text-inherit uppercase">{battleStatus}</Text>
 //                   <Text className="text-inherit">{randInt(30, 100)}</Text>
 //                 </div>
 //               ))
@@ -119,7 +119,7 @@ const allRooms: RoomInfo[] = [
 //         <div className="flex flex-row justify-between items-start">
 //           <div>
 //             <h3 className="text-xl md:text-2xl font-bold">All battles</h3>
-//             <span className="text-muted text-sm md:text-md">{allRooms.length}+ rooms</span>
+//             <span className="text-muted text-sm md:text-md">{allBattles.length}+ battles</span>
 //           </div>
 //           <div className="flex justify-end">
 //             <div className="relative" data-headlessui-state="">
@@ -138,8 +138,8 @@ const allRooms: RoomInfo[] = [
 //         <div
 //           className="grid grid-cols-2 items-start lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 flex-1 mb-4">
 //           {
-//             allRooms?.map((room) => (
-//               <RoomCard key={room.idByGame + room.gameInfo.name} {...room} />
+//             allBattles?.map((battle) => (
+//               <BattleCard key={battle.idByGame + battle.gameInfo.name} {...battle} />
 //             ))
 //           }
 //         </div>
@@ -154,7 +154,7 @@ export default function Home() {
     <>
       <ClientLogin
         getNodeUrl={() => "http://localhost:2428"}
-        getApplicationId={() => "123"}
+        getApplicationId={() => "JA83FZMD3XjSZgDzJfHUQUqRxwp1KucJajWoQHnbroQw"}
         sucessRedirect={() => router.push('/new-battle')}
       />
       <SetupModal

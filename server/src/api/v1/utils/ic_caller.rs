@@ -44,7 +44,7 @@ impl<'a> SudokuContract<'a> {
         Ok(Self(ic_caller))
     }
 
-    pub async fn create_new_room(
+    pub async fn create_new_battle(
         &self,
         deposit_price: u128,
         service_fee: u128,
@@ -53,46 +53,46 @@ impl<'a> SudokuContract<'a> {
         let request = self
             .0
             .canister
-            .update("create_new_room")
+            .update("create_new_battle")
             .with_args((deposit_price, service_fee, creator))
             .build::<(Result<usize, sudoku::error::ContractError>,)>();
-        let room_id = request
+        let battle_id = request
             .call_and_wait()
             .await?
             .0
-            .map_err(|e| anyhow!("Fail to create new room: {:?}", e))?;
-        Ok(room_id)
+            .map_err(|e| anyhow!("Fail to create new battle: {:?}", e))?;
+        Ok(battle_id)
     }
 
-    pub async fn join_room(
+    pub async fn join_battle(
         &self,
-        room_id: usize,
+        battle_id: usize,
         player: Principal,
     ) -> anyhow::Result<()> {
         let request = self
             .0
             .canister
-            .update("join_room")
-            .with_args((room_id, player))
+            .update("join_battle")
+            .with_args((battle_id, player))
             .build::<(Result<(), sudoku::error::ContractError>,)>();
         request
             .call_and_wait()
             .await?
             .0
-            .map_err(|e| anyhow!("Fail to join room : {:?}", e))?;
+            .map_err(|e| anyhow!("Fail to join battle : {:?}", e))?;
         Ok(())
     }
 
     pub async fn start_game(
         &self,
-        room_id: usize,
+        battle_id: usize,
         initial_state: Vec<(u8, u8)>,
     ) -> anyhow::Result<()> {
         let request = self
             .0
             .canister
             .update("start_game")
-            .with_args((room_id, initial_state))
+            .with_args((battle_id, initial_state))
             .build::<(Result<(), sudoku::error::ContractError>,)>();
         request
             .call_and_wait()

@@ -4,7 +4,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error("unknown error")]
+    #[error("unknown error: {0}")]
     Unknown(#[from] anyhow::Error),
 }
 

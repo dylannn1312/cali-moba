@@ -7,9 +7,9 @@ export class GameAPI {
         return fee / 1_000_000;
     }
 
-    static async createNewRoom(deposit_price: number, creator: string): Promise<{
+    static async createNewBattle(deposit_price: number, creator: string): Promise<{
         tx_hash: string,
-        room_id: number
+        battle_id: number
     }> {
         deposit_price *= 1_000_000;
         let response = await httpService.post<any, any>("/games/new-battle", {
@@ -21,10 +21,10 @@ export class GameAPI {
     }
 
 
-    static async startGame(initial_state: [number, number][], room_id: number): Promise<string> {
+    static async startGame(initial_state: [number, number][], battle_id: number): Promise<string> {
         let txHash = await httpService.post<any, any>("/games/start-game", {
             initial_state,
-            room_id
+            battle_id
         });
         console.log(txHash);
         return txHash;

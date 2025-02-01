@@ -6,7 +6,7 @@ use crate::config::env_config::env;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StartGameReq {
-    room_id: usize,
+    battle_id: usize,
     initial_state: Vec<(u8, u8)>,
 }
 
@@ -14,7 +14,7 @@ pub async fn start_game(Json(game): Json<StartGameReq>) -> Result<Json<()>, AppE
     let env = env();
     let agent = SudokuContract::agent_from_env(env).await?;
     let sudoku_contract = SudokuContract::from_env(env, &agent)?;
-    sudoku_contract.start_game(game.room_id, game.initial_state).await?;
+    sudoku_contract.start_game(game.battle_id, game.initial_state).await?;
     Ok(Json(()))
 }
 
@@ -28,7 +28,7 @@ mod tests {
     async fn test_start_game() {
         config_app().await;
         let res = start_game(Json(StartGameReq {
-            room_id: 4,
+            battle_id: 4,
             initial_state: initial_state(),
         }))
             .await

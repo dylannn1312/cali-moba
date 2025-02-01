@@ -9,6 +9,7 @@ pub struct Env {
     pub GAME_OWNER_PEM_FILE: String,
     pub RPC_URL: String,
     pub SERVICE_FEE: u128,
+    pub APPLICATION_ID: String,
 }
 
 static ENV: OnceCell<Env> = OnceCell::const_new();
@@ -27,6 +28,7 @@ pub async fn config_env() {
             GAME_OWNER_PEM_FILE: read_env("GAME_OWNER_PEM_FILE"),
             RPC_URL: read_env("RPC_URL"),
             SERVICE_FEE: read_env("SERVICE_FEE").parse().unwrap(),
+            APPLICATION_ID: read_env("APPLICATION_ID"),
         }
     }).await;
 }

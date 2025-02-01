@@ -32,10 +32,10 @@ type SudokuGame = record {
   deposit_price : nat;
 };
 service : (text, principal) -> {
-  create_new_room : (nat, nat, principal) -> (Result);
+  create_new_battle : (nat, nat, principal) -> (Result);
   get_global_state : () -> (GlobalState) query;
-  get_room_info : (nat64) -> (Result_1) query;
-  join_room : (nat64, principal) -> (Result_2);
+  get_battle_info : (nat64) -> (Result_1) query;
+  join_battle : (nat64, principal) -> (Result_2);
   start_game : (nat64, vec record { nat8; nat8 }) -> (Result_2);
   submit_solution : (nat64, GameSolution) -> (Result_2);
 }

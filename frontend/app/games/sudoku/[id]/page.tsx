@@ -34,7 +34,7 @@ const menuItems: MenuItem[] = [
 ];
 
 export default function SudokuGamePage({ params: {
-    id: room_id
+    id: battle_id
 } }: { params: { id: string } }) {
 
     const [currentPage, setCurrentPage] = useState('game');
@@ -42,17 +42,17 @@ export default function SudokuGamePage({ params: {
         setCurrentPage(e.key);
     };
 
-    const [roomInfo, setRoomInfo] = useState({
+    const [battleInfo, setBattleInfo] = useState({
         depositPrice: 0.1,
         players: ["xion15n98r9fgxrysepr4qnw4m0zjf0yh4w7deagq44"],
         maxPlayers: 1,
     });
     const [txHashes, setTxHashes] = useState([{
-        "description": "Create room",
-        "txHash": localStorage.getItem("createRoomTxHash") || "0x",
+        "description": "Create battle",
+        "txHash": localStorage.getItem("createBattleTxHash") || "0x",
     }, {
-        "description": "Join room",
-        "txHash": localStorage.getItem("joinRoomHash") || "0x",
+        "description": "Join battle",
+        "txHash": localStorage.getItem("joinBattleHash") || "0x",
     }]);
     const [gameStarted, setGameStarted] = useState(false);
     const [waitForStartingGame, setWaitForStartingGame] = useState(false);
@@ -62,7 +62,7 @@ export default function SudokuGamePage({ params: {
             <div className="flex flex-col gap-2">
                 <div className="flex gap-2 items-center">
                     <Image src={"https://brainium.com/wp-content/uploads/2021/11/sudoku-Mobile-hero-asset@2x.png"} alt={""} width={50} height={50} />
-                    <Title level={1} className="!mb-0">Sudoku #{room_id}</Title>
+                    <Title level={1} className="!mb-0">Sudoku #{battle_id}</Title>
                 </div>
                 <HiddenCopyableText textToCopy={process.env.SUDOKU_CONTRACT}>
                     <Text className="text-muted font-semibold">
@@ -76,23 +76,23 @@ export default function SudokuGamePage({ params: {
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-2 items-center cursor-pointer">
                             <InfoIcon className="fill-blue-500" />
-                            <Title className="!mb-0 !text-current flex-1" level={3}>Room info</Title>
+                            <Title className="!mb-0 !text-current flex-1" level={3}>Battle info</Title>
                             <ArrowDownIcon />
                         </div>
                         <div className="w-full bg-gray-600 h-[1px]"></div>
                         <div className="flex text-muted">
                             <Text className="flex-1 font-semibold">Deposit price</Text>
-                            <Text className="uppercase font-semibold">{roomInfo.depositPrice}</Text>
+                            <Text className="uppercase font-semibold">{battleInfo.depositPrice}</Text>
                             &nbsp; <Text className="uppercase">{process.env.TOKEN}</Text>
                         </div>
                         <div className="flex text-muted">
                             <Text className="flex-1 font-semibold">Current prize pool</Text>
-                            <Text className="font-semibold">{roomInfo.depositPrice * roomInfo.players.length}</Text>
+                            <Text className="font-semibold">{battleInfo.depositPrice * battleInfo.players.length}</Text>
                             &nbsp; <Text className="uppercase">{process.env.TOKEN}</Text>
                         </div>
                         <div className="flex text-muted">
-                            <Text className="flex-1 font-semibold">Room size</Text>
-                            <Text className="font-semibold">{roomInfo.maxPlayers}</Text>
+                            <Text className="flex-1 font-semibold">Battle size</Text>
+                            <Text className="font-semibold">{battleInfo.maxPlayers}</Text>
                             &nbsp; <Text className="uppercase">players</Text>
                         </div>
                     </div>
@@ -100,12 +100,12 @@ export default function SudokuGamePage({ params: {
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-2 items-center text-green-600 cursor-pointer">
                             <PeopleIcon />
-                            <Title className="!mb-0 !text-current flex-1" level={3}>Players ({roomInfo.players.length}/{roomInfo.maxPlayers})</Title>
+                            <Title className="!mb-0 !text-current flex-1" level={3}>Players ({battleInfo.players.length}/{battleInfo.maxPlayers})</Title>
                             <ArrowDownIcon />
                         </div>
                         <div className="w-full bg-gray-600 h-[1px]"></div>
                         {
-                            roomInfo.players.map((address) => (
+                            battleInfo.players.map((address) => (
                                 <HiddenCopyableText textToCopy={address} key={address}>
                                     <Text className="text-muted font-semibold">{address}</Text>
                                 </HiddenCopyableText>
@@ -139,16 +139,16 @@ export default function SudokuGamePage({ params: {
                         <div className="items-center justify-center flex flex-col">
                             {
                                 gameStarted ?
-                                    <SudokuGame room_id={parseInt(room_id)} onVerifySuccess={handleVerifySuccess} onClaimSuccess={handleClaimSuccess} />
+                                    <SudokuGame battle_id={parseInt(battle_id)} onVerifySuccess={handleVerifySuccess} onClaimSuccess={handleClaimSuccess} />
                                     :
                                     <div className="flex flex-col gap-4 items-center">
-                                        <Progress type="circle" percent={roomInfo.players.length * 100 / roomInfo.maxPlayers} strokeColor={conicColors} />
+                                        <Progress type="circle" percent={battleInfo.players.length * 100 / battleInfo.maxPlayers} strokeColor={conicColors} />
                                         {
-                                            roomInfo.players.length === roomInfo.maxPlayers ?
-                                                <Text className="text-green-600 font-semibold text-xl">All players are in the room now</Text>
+                                            battleInfo.players.length === battleInfo.maxPlayers ?
+                                                <Text className="text-green-600 font-semibold text-xl">All players are in the battle now</Text>
                                                 : <Text className="text-muted font-semibold text-xl">Waiting for players to join...</Text>
                                         }
-                                        <Button disabled={roomInfo.players.length !== roomInfo.maxPlayers || waitForStartingGame} type="primary" className="py-6" onClick={handleStartGame}>
+                                        <Button disabled={battleInfo.players.length !== battleInfo.maxPlayers || waitForStartingGame} type="primary" className="py-6" onClick={handleStartGame}>
                                             <div className="flex gap-2 items-center">
                                                 {waitForStartingGame && <Spin spinning={waitForStartingGame} indicator={<LoadingOutlined spin />} />}
                                                 <Text className="uppercase font-bold text-xl">
@@ -171,7 +171,7 @@ export default function SudokuGamePage({ params: {
         //         toast.error("Please connect to your wallet first");
         //     } else {
         //         setWaitForStartingGame(true);
-        //         let txHash = await GameAPI.startGame([[0, 8], [1, 7], [7, 9], [14, 8], [17, 1]], parseInt(room_id));
+        //         let txHash = await GameAPI.startGame([[0, 8], [1, 7], [7, 9], [14, 8], [17, 1]], parseInt(battle_id));
         //         setTxHashes([...txHashes, { description: "Start game", txHash }]);
         //         setGameStarted(true);
         //     }

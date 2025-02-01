@@ -1,15 +1,15 @@
 'use client';
-import { RoomInfo, RoomStatus, roomStatusColor } from "@/types/room";
+import { BattleInfo, BattleStatus, battleStatusColor } from "@/types/battle";
 import { Button, Typography } from "antd";
 import Link from "next/link";
 import PeopleIcon from "../common/icons/PeopleIcon";
-import GameStatusTag from "../common/RoomStatusTag";
+import GameStatusTag from "../common/BattleStatusTag";
 import HiddenCopyableText from "../common/HiddenCopyableText";
 import { shortAddress } from "@/utils/chain";
 
 const { Title, Text } = Typography;
 
-export default function RoomCard({
+export default function BattleCard({
     idByGame,
     creator,
     status,
@@ -17,7 +17,7 @@ export default function RoomCard({
     maxPlayers,
     gameInfo,
     depositPrice
-}: RoomInfo) {
+}: BattleInfo) {
     return (
         <div className="cursor-pointer rounded-xl shadow-lg flex flex-col pb-4 gap-4 bg-light-secondary">
             <div className="h-[250px] relative overflow-hidden rounded-t-xl border-b border-button">
@@ -33,7 +33,7 @@ export default function RoomCard({
                     <GameStatusTag status={status} />
                 </div>
                 <div className="flex gap-2 items-center">
-                    <PeopleIcon color={roomStatusColor[status]} size={16} />
+                    <PeopleIcon color={battleStatusColor[status]} size={16} />
                     <Text>{`${playerCount}/${maxPlayers}`}</Text>
                 </div>
                 <HiddenCopyableText textToCopy={creator}>
@@ -47,7 +47,7 @@ export default function RoomCard({
             </div>
             <Button type="primary" className="rounded-lg mx-3 py-5">
                 <Text strong className="uppercase">
-                    {status == RoomStatus.Pending ? "Join" : (status == RoomStatus.Playing ? "Watch" : "Enter")}
+                    {status == BattleStatus.Pending ? "Join" : (status == BattleStatus.Playing ? "Watch" : "Enter")}
                 </Text>
             </Button>
         </div>

@@ -14,11 +14,11 @@ fn instantiate(vk: String, verifier_address: Principal) {
 }
 
 #[cfg_attr(not(feature = "library"), ic_cdk::query)]
-fn get_room_info(id: usize) -> Result<SudokuGame, ContractError> {
+fn get_battle_info(id: usize) -> Result<SudokuGame, ContractError> {
     GAME_STORAGE.with(|games| {
         let games = games.borrow();
         if id >= games.len() {
-            return Err(InvalidAction("room not found".to_string()));
+            return Err(InvalidAction("battle not found".to_string()));
         }
         Ok(games[id].clone())
     })
@@ -35,20 +35,20 @@ fn get_global_state() -> GlobalState {
 }
 
 #[cfg_attr(not(feature = "library"), ic_cdk::update)]
-fn create_new_room(
+fn create_new_battle(
     deposit_price: u128,
     service_fee: u128,
     creator: Principal,
 ) -> Result<usize, ContractError> {
     OWNER.with_borrow(|owner| {
         if *owner != api::caller() {
-            return Err(InvalidAction("only owner can create a room".to_string()));
+            return Err(InvalidAction("only owner can create a battle".to_string()));
         }
         Ok(())
     })?;
 
     GAME_STORAGE.with_borrow_mut(|game| {
-        let new_room_id = game.len();
+        let new_battle_id = game.len();
         game.push(SudokuGame {
             initial_state: None,
             creator,
@@ -59,12 +59,12 @@ fn create_new_room(
             winner: None,
             claimed: false,
         });
-        Ok(new_room_id)
+        Ok(new_battle_id)
     })
 }
 
 #[cfg_attr(not(feature = "library"), ic_cdk::update)]
-fn join_room(room_id: usize, player: Principal) -> Result<(), ContractError> {
+fn join_battle(battle_id: usize, player: Principal) -> Result<(), ContractError> {
     OWNER.with_borrow(|owner| {
         if *owner != api::caller() {
             return Err(InvalidAction("only owner can add player".to_string()));
@@ -74,8 +74,8 @@ fn join_room(room_id: usize, player: Principal) -> Result<(), ContractError> {
 
     GAME_STORAGE.with_borrow_mut(|games| {
         let game = games
-            .get_mut(room_id)
-            .ok_or(InvalidAction("room not found".to_string()))?;
+            .get_mut(battle_id)
+            .ok_or(InvalidAction("battle not found".to_string()))?;
         if game.winner.is_some() {
             return Err(InvalidAction("the game is overed".to_string()));
         }
@@ -97,7 +97,7 @@ fn join_room(room_id: usize, player: Principal) -> Result<(), ContractError> {
 }
 
 #[cfg_attr(not(feature = "library"), ic_cdk::update)]
-fn start_game(room_id: usize, initial_state: Vec<(u8, u8)>) -> Result<(), ContractError> {
+fn start_game(battle_id: usize, initial_state: Vec<(u8, u8)>) -> Result<(), ContractError> {
     OWNER.with_borrow(|owner| {
         if *owner != api::caller() {
             return Err(InvalidAction("only owner can start game".to_string()));
@@ -107,8 +107,8 @@ fn start_game(room_id: usize, initial_state: Vec<(u8, u8)>) -> Result<(), Contra
 
     GAME_STORAGE.with_borrow_mut(|games| {
         let game = games
-            .get_mut(room_id)
-            .ok_or(InvalidAction("room not found".to_string()))?;
+            .get_mut(battle_id)
+            .ok_or(InvalidAction("battle not found".to_string()))?;
         if game.initial_state.is_some() {
             return Err(InvalidAction("initial game state is not none".to_string()));
         }
@@ -118,12 +118,12 @@ fn start_game(room_id: usize, initial_state: Vec<(u8, u8)>) -> Result<(), Contra
 }
 
 #[cfg_attr(not(feature = "library"), ic_cdk::update)]
-async fn submit_solution(room_id: usize, solution: GameSolution) -> Result<(), ContractError> {
+async fn submit_solution(battle_id: usize, solution: GameSolution) -> Result<(), ContractError> {
     let verifier = VERIFIER.with_borrow(|v| *v);
     let initial_state = GAME_STORAGE.with_borrow_mut(|games| {
         let game = games
-            .get_mut(room_id)
-            .ok_or(InvalidAction("room not found".to_string()))?;
+            .get_mut(battle_id)
+            .ok_or(InvalidAction("battle not found".to_string()))?;
         let sender = api::caller();
 
         if game.winner.is_some() {
@@ -158,8 +158,8 @@ async fn submit_solution(room_id: usize, solution: GameSolution) -> Result<(), C
 
     GAME_STORAGE.with_borrow_mut(|games| {
         let game = games
-            .get_mut(room_id)
-            .ok_or(InvalidAction("room not found".to_string()))
+            .get_mut(battle_id)
+            .ok_or(InvalidAction("battle not found".to_string()))
             .unwrap();
         game.solution = Some(solution);
         game.winner = Some(api::caller());
@@ -218,16 +218,16 @@ mod tests {
             .update_call(
                 sudoku_id,
                 owner,
-                "create_new_room",
+                "create_new_battle",
                 encode_args((1u128, 1u128, player1)).unwrap(),
             )
             .unwrap();
 
-        let room_id = match res {
-            WasmResult::Reply(room_id) => room_id,
-            _ => panic!("create_new_room failed"),
+        let battle_id = match res {
+            WasmResult::Reply(battle_id) => battle_id,
+            _ => panic!("create_new_battle failed"),
         };
-        let room_id = Decode!(&room_id, Result<usize, ContractError>)
+        let battle_id = Decode!(&battle_id, Result<usize, ContractError>)
             .unwrap()
             .unwrap();
 
@@ -235,8 +235,8 @@ mod tests {
             .update_call(
                 sudoku_id,
                 owner,
-                "join_room",
-                encode_args((room_id, player1)).unwrap(),
+                "join_battle",
+                encode_args((battle_id, player1)).unwrap(),
             )
             .unwrap()
         {
@@ -253,7 +253,7 @@ mod tests {
                 sudoku_id,
                 owner,
                 "start_game",
-                encode_args((room_id, initial_state())).unwrap(),
+                encode_args((battle_id, initial_state())).unwrap(),
             )
             .unwrap()
         {
@@ -270,7 +270,7 @@ mod tests {
                 sudoku_id,
                 player1,
                 "submit_solution",
-                encode_args((room_id, GameSolution::Private(sp1_proof()))).unwrap(),
+                encode_args((battle_id, GameSolution::Private(sp1_proof()))).unwrap(),
             )
             .unwrap()
         {
@@ -286,8 +286,8 @@ mod tests {
             .query_call(
                 sudoku_id,
                 owner,
-                "get_room_info",
-                encode_one(room_id).unwrap(),
+                "get_battle_info",
+                encode_one(battle_id).unwrap(),
             )
             .unwrap()
         {
