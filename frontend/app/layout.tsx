@@ -39,6 +39,7 @@ export default function RootLayout({
                 fontWeight: 'inherit',
                 fontSize: 'inherit',
                 colorPrimaryText: THEME.SECONDARY_COLOR,
+                colorBgContainerDisabled: THEME.MUTED_COLOR,
               },
               Typography: {
                 fontSize: 'inherit',
@@ -46,6 +47,14 @@ export default function RootLayout({
               },
               Input: {
                 colorBgContainer: THEME.BUTTON_COLOR
+              },
+              InputNumber: {
+                colorBgContainer: THEME.BUTTON_COLOR,
+                colorTextPlaceholder: THEME.MUTED_COLOR
+              },
+              Select: {
+                colorBgContainer: THEME.BUTTON_COLOR,
+                selectorBg: THEME.BUTTON_COLOR,
               }
             }
           }}

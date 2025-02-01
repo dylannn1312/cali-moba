@@ -83,12 +83,12 @@ export default function SudokuGamePage({ params: {
                         <div className="flex text-muted">
                             <Text className="flex-1 font-semibold">Deposit price</Text>
                             <Text className="uppercase font-semibold">{roomInfo.depositPrice}</Text>
-                            &nbsp; <Text className="uppercase">{process.env.DENOM}</Text>
+                            &nbsp; <Text className="uppercase">{process.env.TOKEN}</Text>
                         </div>
                         <div className="flex text-muted">
                             <Text className="flex-1 font-semibold">Current prize pool</Text>
                             <Text className="font-semibold">{roomInfo.depositPrice * roomInfo.players.length}</Text>
-                            &nbsp; <Text className="uppercase">{process.env.DENOM}</Text>
+                            &nbsp; <Text className="uppercase">{process.env.TOKEN}</Text>
                         </div>
                         <div className="flex text-muted">
                             <Text className="flex-1 font-semibold">Room size</Text>

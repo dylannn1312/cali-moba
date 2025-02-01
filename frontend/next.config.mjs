@@ -4,7 +4,7 @@ const nextConfig = {
         API_URL: process.env.API_URL,
         SUDOKU_CONTRACT: process.env.SUDOKU_CONTRACT,
         ICP_API_HOST: process.env.ICP_API_HOST,
-
+        TOKEN: process.env.TOKEN,
     },
     images: {
         remotePatterns: [

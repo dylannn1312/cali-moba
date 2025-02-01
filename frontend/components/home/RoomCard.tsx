@@ -42,8 +42,8 @@ export default function RoomCard({
                         {shortAddress(creator, 11)}
                     </div>
                 </HiddenCopyableText>
-                <Text><strong>Deposit: </strong><span className="uppercase">{depositPrice} {process.env.DENOM}</span></Text>
-                <Text><strong>Pool: </strong><span className="uppercase">{depositPrice * playerCount} {process.env.DENOM}</span></Text>
+                <Text><strong>Deposit: </strong><span className="uppercase">{depositPrice} {process.env.TOKEN}</span></Text>
+                <Text><strong>Pool: </strong><span className="uppercase">{depositPrice * playerCount} {process.env.TOKEN}</span></Text>
             </div>
             <Button type="primary" className="rounded-lg mx-3 py-5">
                 <Text strong className="uppercase">

@@ -4,6 +4,7 @@ declare global {
         API_URL: string;
         SUDOKU_CONTRACT: string;
         ICP_API_HOST: string;
+        TOKEN: string;
     }
   }
 }

@@ -66,7 +66,7 @@ export default function NewRoomPage() {
             </Title>
             <div className={"flex gap-8"}>
                 <div className={"flex flex-1 flex-col gap-4"}>
-                    <div className="rounded-xl p-4 shadow-md flex flex-col gap-4 bg-secondary">
+                    <div className="rounded-xl p-4 shadow-md flex flex-col gap-4 bg-light-secondary">
                         <div className="flex flex-col">
                             <Title level={5}>Deposit price</Title>
                             <InputNumber
@@ -74,7 +74,7 @@ export default function NewRoomPage() {
                                 className="h-[40px] w-full border-2"
                                 suffix={
                                     <Text className="text-muted uppercase">
-                                        {process.env.DENOM}
+                                        {process.env.TOKEN}
                                     </Text>
                                 }
                                 onChange={(value) => setDepositPrice(value as number)}
@@ -114,7 +114,7 @@ export default function NewRoomPage() {
 
                         </div>
                     </div>
-                    <div className="rounded-xl shadow-md py-4 bg-secondary">
+                    <div className="rounded-xl shadow-md py-4 bg-light-secondary">
                         <Title level={4} className="p-4">Summary</Title>
                         <div className="w-full bg-gray-300 h-[1px]"></div>
                         <div className="flex flex-col gap-3 p-4 ">
@@ -129,7 +129,7 @@ export default function NewRoomPage() {
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Deposit price</Text>
                                 <Text strong className="text-text uppercase">{depositPrice}</Text>
-                                <Text className="uppercase">{process.env.DENOM}</Text>
+                                <Text className="uppercase">{process.env.TOKEN}</Text>
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Number of players</Text>
@@ -139,21 +139,21 @@ export default function NewRoomPage() {
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Service fee</Text>
                                 <Text strong className="text-text uppercase">{serviceFee}</Text>
-                                <Text className="uppercase">{process.env.DENOM}</Text>
+                                <Text className="uppercase">{process.env.TOKEN}</Text>
                             </div>
                             <div className="flex gap-1 items-center text-base">
                                 <Title className="flex-1" level={4}>Total</Title>
                                 <Text strong className="uppercase">{depositPrice + (serviceFee ?? 0)}</Text>
-                                <Text className="uppercase text-muted">{process.env.DENOM}</Text>
+                                <Text className="uppercase text-muted">{process.env.TOKEN}</Text>
                             </div>
                             <Button type="primary" className="w-full mt-3 h-[50px]" disabled={depositPrice === 0 || maxPlayers === 0 || creatingRoom || joiningRoom } onClick={handleConfirm}>
-                                <strong className="text-2xl">{creatingRoom ? "Creating room..." : (joiningRoom ? "Joining room..." : "Confirm")}</strong>
+                                <strong className="text-2xl text-text">{creatingRoom ? "Creating room..." : (joiningRoom ? "Joining room..." : "Confirm")}</strong>
                             </Button>
                         </div>
                     </div>
 
                 </div>
-                <div className="flex-1 flex flex-col p-4 rounded-xl gap-6 bg-secondary">
+                <div className="flex-1 flex flex-col p-4 rounded-xl gap-6 bg-light-secondary">
                     <Title level={4} className="!mb-0 uppercase">Select a game</Title>
                     <SearchBar placeholder="Search game by name" className="w-full" />
 
@@ -194,12 +194,12 @@ export default function NewRoomPage() {
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Total prize pool: </Text>
                                 <Text className="text-green-600" strong>{allGames[selectedGame].totalPrizePool}</Text>
-                                <Text className="uppercase ">{process.env.DENOM}</Text>
+                                <Text className="uppercase ">{process.env.TOKEN}</Text>
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Largest pool: </Text>
                                 <Text className="text-green-600" strong>{allGames[selectedGame].largestPrizePool}</Text>
-                                <Text className="uppercase ">{process.env.DENOM}</Text>
+                                <Text className="uppercase ">{process.env.TOKEN}</Text>
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Playing rooms: </Text>
@@ -235,7 +235,7 @@ export default function NewRoomPage() {
             //             },
             //             calculateFee(200000, gasPrice),
             //             undefined,
-            //             coins((depositPrice + serviceFee) * 1_000_000, `u${process.env.DENOM}`)
+            //             coins((depositPrice + serviceFee) * 1_000_000, `u${process.env.TOKEN}`)
             //         ).then((tx) => {
             //             setJoiningRoom(false);
             //             localStorage.setItem("joinRoomHash", tx.transactionHash);
