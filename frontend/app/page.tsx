@@ -11,6 +11,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import BattleIcon from "@/components/common/icons/BattleIcon";
 import { ClientLogin, SetupModal } from "@calimero-network/calimero-client";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
+import { getStorage, StorageKey } from "@/utils/storage";
+import { getOrCreateKeypair } from "@/auth/ed25519";
+import { CalimeroAdminAPI } from "@/api/calimero-admin/calimeroAdminAPI";
+import { caliAdminService } from "@/api/calimero-admin";
 
 const { Text } = Typography;
 
@@ -69,101 +75,81 @@ const allBattles: BattleInfo[] = [
   },
 ]
 
-// export default function Home() {
-//   const router = useRouter();
-
-//   return (
-//     <section className="flex flex-col md:flex-row md:gap-6 pt-6 max-w-[1920px] mx-auto">
-//       <div className="backdrop-blur-lg flex flex-col gap-8 w-full pb-2 md:w-[16rem] z-40 sticky top-[142px] md:top-[110px] md:overflow-auto md:h-[calc(100vh-180px)] scrollbar-none">
-//         <Button className="flex items-center gap-2 py-5" type="primary" onClick={() => router.push('/new-battle')}>
-//           {/* <SubmitNFTIcon /> */}
-//           <BattleIcon />
-//           <p className="text-sm font-bold max-w-lg uppercase">New battle</p>
-//         </Button>
-//         {/* <SearchBar className="w-full" /> */}
-//         <div className="flex flex-col gap-6 pb-10 font-medium">
-//           <div className="flex flex-col gap-4">
-//             <div className="flex items-center cursor-pointer">
-//               <Text strong className="flex-1">Games</Text>
-//               <ArrowDownIcon />
-//             </div>
-//             {
-//               allGames.map((game) => (
-//                 <div className="flex items-center gap-2 text-muted cursor-pointer hover:text-text" key={game.name}>
-//                   <Checkbox></Checkbox>
-//                   <Image src={game.icon} alt="" width={25} height={25} className="rounded-full" />
-//                   <Text className="flex-1 text-inherit uppercase">{game.name}</Text>
-//                   <Text className="text-inherit">{game.playingBattles}</Text>
-//                 </div>
-//               ))
-//             }
-//           </div>
-//           <div className="flex flex-col gap-4">
-//             <div className="flex items-center cursor-pointer">
-//               <Text strong className="flex-1">Status</Text>
-//               <ArrowDownIcon />
-//             </div>
-//             {
-//               [BattleStatus.Playing, BattleStatus.Pending, BattleStatus.Finished].map((battleStatus) => (
-//                 <div className="flex items-center gap-2 text-muted cursor-pointer hover:text-text" key={battleStatus}>
-//                   <Checkbox></Checkbox>
-//                   <Text className="flex-1 text-inherit uppercase">{battleStatus}</Text>
-//                   <Text className="text-inherit">{randInt(30, 100)}</Text>
-//                 </div>
-//               ))
-//             }
-//           </div>
-//         </div>
-//       </div>
-//       <div className="flex-1 flex flex-col gap-8">
-//         <div className="flex flex-row justify-between items-start">
-//           <div>
-//             <h3 className="text-xl md:text-2xl font-bold">All battles</h3>
-//             <span className="text-muted text-sm md:text-md">{allBattles.length}+ battles</span>
-//           </div>
-//           <div className="flex justify-end">
-//             <div className="relative" data-headlessui-state="">
-//               <button
-//                 className="flex gap-2 items-center transition-all p-2 rounded-md hover:bg-button-hover text-sm border-2 bg-transparent border-transparent"
-//               >
-//                 <span className="font-bold">Sort by</span>
-//                 <span>Most recent</span>
-//                 <ArrowDownIcon />
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-
-//         <SearchBar placeholder="Search by battle ID, game, ..." className="w-full" />
-//         <div
-//           className="grid grid-cols-2 items-start lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 flex-1 mb-4">
-//           {
-//             allBattles?.map((battle) => (
-//               <BattleCard key={battle.idByGame + battle.gameInfo.name} {...battle} />
-//             ))
-//           }
-//         </div>
-//       </div>
-//     </section>
-//   );
-// }
-
 export default function Home() {
-  let router = useRouter();
+  const router = useRouter();
+
   return (
-    <>
-      <ClientLogin
-        getNodeUrl={() => "http://localhost:2428"}
-        getApplicationId={() => "JA83FZMD3XjSZgDzJfHUQUqRxwp1KucJajWoQHnbroQw"}
-        sucessRedirect={() => router.push('/new-battle')}
-      />
-      <SetupModal
-        successRoute={() => {}}
-        getNodeUrl={() => localStorage.getItem('nodeUrl')}
-        setNodeUrl={(url) => localStorage.setItem('nodeUrl', url)}
-        getApplicationId={() => localStorage.getItem('appId')}
-        setApplicationId={(id) => localStorage.setItem('appId', id)}
-      />
-    </>
+    <section className="flex flex-col md:flex-row md:gap-6 pt-6 max-w-[1920px] mx-auto">
+      <div className="backdrop-blur-lg flex flex-col gap-8 w-full pb-2 md:w-[16rem] z-40 sticky top-[142px] md:top-[110px] md:overflow-auto md:h-[calc(100vh-180px)] scrollbar-none">
+        <Button className="flex items-center gap-2 py-5" type="primary" onClick={() => router.push('/new-battle')}>
+          {/* <SubmitNFTIcon /> */}
+          <BattleIcon />
+          <p className="text-sm font-bold max-w-lg uppercase">New battle</p>
+        </Button>
+        {/* <SearchBar className="w-full" /> */}
+        <div className="flex flex-col gap-6 pb-10 font-medium">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center cursor-pointer">
+              <Text strong className="flex-1">Games</Text>
+              <ArrowDownIcon />
+            </div>
+            {
+              allGames.map((game) => (
+                <div className="flex items-center gap-2 text-muted cursor-pointer hover:text-text" key={game.name}>
+                  <Checkbox></Checkbox>
+                  <Image src={game.icon} alt="" width={25} height={25} className="rounded-full" />
+                  <Text className="flex-1 text-inherit uppercase">{game.name}</Text>
+                  <Text className="text-inherit">{game.playingBattles}</Text>
+                </div>
+              ))
+            }
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center cursor-pointer">
+              <Text strong className="flex-1">Status</Text>
+              <ArrowDownIcon />
+            </div>
+            {
+              [BattleStatus.Playing, BattleStatus.Pending, BattleStatus.Finished].map((battleStatus) => (
+                <div className="flex items-center gap-2 text-muted cursor-pointer hover:text-text" key={battleStatus}>
+                  <Checkbox></Checkbox>
+                  <Text className="flex-1 text-inherit uppercase">{battleStatus}</Text>
+                  <Text className="text-inherit">{randInt(30, 100)}</Text>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 flex flex-col gap-8">
+        <div className="flex flex-row justify-between items-start">
+          <div>
+            <h3 className="text-xl md:text-2xl font-bold">All battles</h3>
+            <span className="text-muted text-sm md:text-md">{allBattles.length}+ battles</span>
+          </div>
+          <div className="flex justify-end">
+            <div className="relative" data-headlessui-state="">
+              <button
+                className="flex gap-2 items-center transition-all p-2 rounded-md hover:bg-button-hover text-sm border-2 bg-transparent border-transparent"
+              >
+                <span className="font-bold">Sort by</span>
+                <span>Most recent</span>
+                <ArrowDownIcon />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <SearchBar placeholder="Search by battle ID, game, ..." className="w-full" />
+        <div
+          className="grid grid-cols-2 items-start lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 flex-1 mb-4">
+          {
+            allBattles?.map((battle) => (
+              <BattleCard key={battle.idByGame + battle.gameInfo.name} {...battle} />
+            ))
+          }
+        </div>
+      </div>
+    </section>
   );
 }

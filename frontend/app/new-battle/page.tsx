@@ -1,5 +1,6 @@
 'use client';
 
+import { caliAdminService } from "@/api/calimero-admin";
 import { GameAPI } from "@/api/gameAPI";
 import HiddenCopyableText from "@/components/common/HiddenCopyableText";
 import ArrowLeftIcon from "@/components/common/icons/ArrowLeftIcon";
@@ -8,6 +9,7 @@ import { THEME } from "@/styles/theme";
 import { GameInfo } from "@/types/game";
 import { shortAddress } from "@/utils/chain";
 import { randInt } from "@/utils/math";
+import { StorageKey } from "@/utils/storage";
 import { Button, Col, Divider, Input, InputNumber, Row, Select, Typography } from "antd";
 import { isUndefined } from "lodash";
 import Image from "next/image";
@@ -52,7 +54,9 @@ export default function NewBattlePage() {
     // const { address, getSigningCosmWasmClient } = useChain(process.env.CHAIN_NAME);
 
     const [depositPrice, setDepositPrice] = useState(0);
-    const [maxPlayers, setMaxPlayers] = useState(0);
+    const [nodeUrl, setNodeUrl] = useState('');
+    const [nodePublicKey, setNodePublicKey] = useState('');
+    const [nodePrivateKey, setNodePrivateKey] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
     const [selectedGame, setSelectedGame] = useState(0);
     const [creatingBattle, setCreatingBattle] = useState(false);
@@ -62,7 +66,7 @@ export default function NewBattlePage() {
         <div className={"flex flex-col mt-8"}>
             <Title level={2} className="flex items-center cursor-pointer" onClick={() => router.back()}>
                 <ArrowLeftIcon color={THEME.PRIMARY_COLOR} />
-                Create your battle
+                Create new battle
             </Title>
             <div className={"flex gap-8"}>
                 <div className={"flex flex-1 flex-col gap-4"}>
@@ -80,19 +84,7 @@ export default function NewBattlePage() {
                                 onChange={(value) => setDepositPrice(value as number)}
                             />
                         </div>
-                        <div className="flex flex-col">
-                            <Title level={5}>Number of players</Title>
-                            <InputNumber
-                                placeholder="Enter the maximum number of players"
-                                className="h-[40px] w-full border-2"
-                                suffix={
-                                    <Text className="text-muted uppercase">
-                                        player
-                                    </Text>
-                                }
-                                onChange={(value) => setMaxPlayers(Math.floor(value as number))}
-                            />
-                        </div>
+
                         <div className="flex flex-col">
                             <Title level={5}>Difficulty</Title>
                             <Select
@@ -133,7 +125,7 @@ export default function NewBattlePage() {
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Number of players</Text>
-                                <Text strong className="text-text uppercase">{maxPlayers}</Text>
+                                <Text strong className="text-text uppercase">{nodePublicKey}</Text>
                                 <Text className="uppercase">player</Text>
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
@@ -146,7 +138,7 @@ export default function NewBattlePage() {
                                 <Text strong className="uppercase">{depositPrice + (serviceFee ?? 0)}</Text>
                                 <Text className="uppercase text-muted">{process.env.TOKEN}</Text>
                             </div>
-                            <Button type="primary" className="w-full mt-3 h-[50px]" disabled={depositPrice === 0 || maxPlayers === 0 || creatingBattle || joiningBattle } onClick={handleConfirm}>
+                            <Button type="primary" className="w-full mt-3 h-[50px]" disabled={confirmable()} onClick={handleConfirm}>
                                 <strong className="text-2xl text-text">{creatingBattle ? "Creating battle..." : (joiningBattle ? "Joining battle..." : "Confirm")}</strong>
                             </Button>
                         </div>
@@ -214,43 +206,13 @@ export default function NewBattlePage() {
 
     async function handleConfirm() {
         try {
-            // if (isUndefined(serviceFee)) {
-            //     toast.error("Service fee is not available");
-            // } else if (isUndefined(address)) {
-            //     toast.error("Please connect to your wallet first");
-            // } else {
-            //     const client = await getSigningCosmWasmClient();
-            //     setCreatingBattle(true);
-            //     GameAPI.createNewBattle(depositPrice, address).then(({battle_id, tx_hash: createBattleTxHash}) => {
-            //         setCreatingBattle(false);
-            //         localStorage.setItem("createBattleTxHash", createBattleTxHash);
-            //         setJoiningBattle(true);
-            //         return client.execute(
-            //             address,
-            //             allGames[selectedGame].contractAddress,
-            //             {
-            //                 join_battle: {
-            //                     battle_id
-            //                 }
-            //             },
-            //             calculateFee(200000, gasPrice),
-            //             undefined,
-            //             coins((depositPrice + serviceFee) * 1_000_000, `u${process.env.TOKEN}`)
-            //         ).then((tx) => {
-            //             setJoiningBattle(false);
-            //             localStorage.setItem("joinBattleHash", tx.transactionHash);
-            //             router.push(`/games/sudoku/${battle_id}`);
-            //         });
-            //     })
-            //     .catch((error) => {
-            //         setCreatingBattle(false);
-            //         if (error instanceof Error) {
-            //             toast.error(error.message);
-            //         } else {
-            //             toast.error("unknown error");
-            //         }
-            //     });
-            // }
+            let {
+                invitationPayload,
+                contextId
+            } = await GameAPI.createNewTeam(nodePublicKey);
+
+            await caliAdminService(nodeUrl).joinContext(contextId, nodePrivateKey, invitationPayload);
+            toast.success(`Successfully joined context ${contextId}`);
 
         } catch (error) {
             if (error instanceof Error) {
@@ -259,5 +221,9 @@ export default function NewBattlePage() {
                 toast.error("unknown error");
             }
         }
+    }
+
+    function confirmable() {
+        return depositPrice === 0 || nodeUrl === '' || nodePublicKey === '' || nodePrivateKey === '' || creatingBattle || joiningBattle;
     }
 }

@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { httpService } from "./httpService";
 
 export class GameAPI {
@@ -20,6 +21,16 @@ export class GameAPI {
         return response;
     }
 
+    static async createNewTeam(nodePublicKey: string): Promise<{
+        invitationPayload: string,
+        contextId: string
+    }> {
+        let response = await httpService.post<any, any>("/games/team/new", {
+            nodePublicKey
+        });
+        toast.info(JSON.stringify(response));
+        return response;
+    }
 
     static async startGame(initial_state: [number, number][], battle_id: number): Promise<string> {
         let txHash = await httpService.post<any, any>("/games/start-game", {

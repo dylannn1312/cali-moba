@@ -1,12 +1,14 @@
 'use client';
-import { Button, Menu, MenuProps, Typography } from "antd";
+import { Button, Input, Menu, MenuProps, Modal, Typography } from "antd";
 import Link from "next/link";
-import { HTMLProps, useState } from "react";
+import { HTMLProps, useRef, useState } from "react";
 import { ConnectedWalletButton, ConnectWalletDropdownMenu, ConnectWalletButton, ConnectWallet } from "@nfid/identitykit/react"
 import { MenuButtonProps } from "@headlessui/react";
 import { shortAddress } from "@/utils/chain";
+import { ClientLogin } from "@calimero-network/calimero-client";
+import { StorageKey } from "@/utils/storage";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -35,9 +37,73 @@ export default function Header() {
         <Link href='/' className="mr-auto"><Text className='text-4xl pr-8 text-primary font-extrabold'>Cali Moba</Text></Link>
 
         <Menu onClick={onClick} selectedKeys={[currentPage]} mode="horizontal" items={menuItems} className='border-b-transparent min-w-[200px]' />
+        <SetupNode />
         <MyConnectWalletButton />
       </div>
     </header>
+  )
+}
+
+function SetupNode() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)} className="font-bold rounded-md py-5" type="primary">
+        {localStorage.getItem(StorageKey.NODE_NAME) || 'Setup node'}
+      </Button>
+      <Modal
+        open={open}
+        destroyOnClose
+        width={600}
+        footer={[]}
+        closeIcon={null}
+        classNames={{
+          content: '!p-0 !rounded-xl !bg-transparent',
+        }}
+      >
+        <div className="flex flex-col gap-3 bg-light-secondary p-5 rounded-xl">
+          <Title level={2} className="w-full text-center">Setup node</Title>
+          <div className="flex flex-col">
+            <Title level={5}>Your node name</Title>
+            <Input
+              placeholder="Enter your node name"
+              className="h-[40px] w-full border-2"
+              onChange={(e) => localStorage.setItem(StorageKey.NODE_NAME, e.target.value)}
+              defaultValue={localStorage.getItem(StorageKey.NODE_NAME) || ''}
+            />
+          </div>
+          <div className="flex flex-col">
+            <Title level={5}>Your node URL</Title>
+            <Input
+              placeholder="Enter your node URL"
+              className="h-[40px] w-full border-2"
+              onChange={(e) => localStorage.setItem(StorageKey.NODE_URL, e.target.value)}
+              defaultValue={localStorage.getItem(StorageKey.NODE_URL) || ''}
+            />
+          </div>
+          <div className="flex flex-col">
+            <Title level={5}>Your node public key</Title>
+            <Input
+              placeholder="Enter your node public key"
+              className="h-[40px] w-full border-2"
+              onChange={(e) => localStorage.setItem(StorageKey.NODE_PUBLIC_KEY, e.target.value)}
+              defaultValue={localStorage.getItem(StorageKey.NODE_PUBLIC_KEY) || ''}
+            />
+          </div>
+          <div className="flex flex-col">
+            <Title level={5}>Your node private key</Title>
+            <Input
+              placeholder="Enter your node private key"
+              className="h-[40px] w-full border-2"
+              onChange={(e) => localStorage.setItem(StorageKey.NODE_PRIVATE_KEY, e.target.value)}
+              defaultValue={localStorage.getItem(StorageKey.NODE_PRIVATE_KEY) || ''}
+            />
+          </div>
+          <Button type="primary" onClick={() => setOpen(false)} className="w-full font-bold uppercase mt-5" size="large">Save</Button>
+        </div>
+      </Modal>
+    </>
   )
 }
 
@@ -52,7 +118,7 @@ function MyConnectWalletButton() {
 }
 
 function ConnectButton(props: HTMLProps<HTMLButtonElement> & {
-    loading?: boolean;
+  loading?: boolean;
 }) {
   return (
     <Button className="font-bold rounded-md py-5" {...props} type="primary">
@@ -62,8 +128,8 @@ function ConnectButton(props: HTMLProps<HTMLButtonElement> & {
 }
 
 function ConnectedButton(props: MenuButtonProps & {
-    connectedAccount: string;
-    icpBalance?: number;
+  connectedAccount: string;
+  icpBalance?: number;
 }) {
   return (
     <ConnectedWalletButton {...props} className="font-bold !rounded-md py-5 !bg-button hover:!bg-button-hover">
