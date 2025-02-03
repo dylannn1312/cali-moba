@@ -6,6 +6,7 @@ use ic_agent::export::Principal;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct JoinBattleReq {
     battle_id: usize,
     player: Principal,

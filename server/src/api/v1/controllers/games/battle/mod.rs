@@ -1,4 +1,5 @@
 pub mod join_battle;
+pub mod battle_info;
 
 use crate::api::v1::errors::AppError;
 use crate::api::v1::utils::ic_caller::SudokuContract;

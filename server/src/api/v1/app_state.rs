@@ -1,5 +1,4 @@
 use crate::api::v1::utils::ic_caller::IcCaller;
-use crate::config::env_config::Env;
 use std::sync::Arc;
 
 #[derive(Clone)]

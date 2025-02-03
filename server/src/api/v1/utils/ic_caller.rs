@@ -4,8 +4,10 @@ use ic_agent::agent::AgentBuilder;
 use ic_agent::export::Principal;
 use ic_agent::identity::Secp256k1Identity;
 use ic_agent::Agent;
+use ic_utils::call::SyncCall;
 use ic_utils::canister::CanisterBuilder;
 use ic_utils::Canister;
+use sudoku::game::SudokuGame;
 
 #[derive(Debug, Clone)]
 pub struct IcCaller<'a> {
@@ -44,6 +46,18 @@ impl<'a> SudokuContract<'a> {
         Ok(Self(ic_caller))
     }
 
+    pub async fn get_battle_info(&self, battle_id: usize) -> anyhow::Result<SudokuGame> {
+        let request = self
+            .0
+            .canister
+            .query("get_battle_info")
+            .with_arg(battle_id)
+            .build::<(Result<SudokuGame, sudoku::error::ContractError>,)>();
+        let res = request.call().await?.0
+            .map_err(|e| anyhow!("Fail to get battle info: {:?}", e))?;
+        Ok(res)
+    }
+    
     pub async fn create_new_battle(
         &self,
         deposit_price: u128,

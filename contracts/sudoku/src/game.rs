@@ -10,7 +10,7 @@ pub struct SudokuGame {
     pub service_fee: u128,
     pub players: Vec<Principal>,
     pub solution: Option<GameSolution>,
-    pub winner: Option<Principal>,
+    pub winners: Option<Vec<PlayerContribution>>,
     pub claimed: bool
 }
 
@@ -18,4 +18,10 @@ pub struct SudokuGame {
 pub enum GameSolution {
     Public(Vec<u8>),
     Private(SP1ProofWithPublicValues)
+}
+
+#[derive(Serialize, Deserialize, CandidType, Clone, Debug)]
+pub struct PlayerContribution {
+    pub player: Principal,
+    pub percent: f32,
 }

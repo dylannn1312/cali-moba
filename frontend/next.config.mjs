@@ -2,7 +2,6 @@
 const nextConfig = {
     env: {
         API_URL: process.env.API_URL,
-        SUDOKU_CONTRACT: process.env.SUDOKU_CONTRACT,
         ICP_API_HOST: process.env.ICP_API_HOST,
         TOKEN: process.env.TOKEN,
         TOKEN_DECIMALS: parseInt(process.env.TOKEN_DECIMALS),

@@ -10,10 +10,10 @@ import { GameInfo } from "@/types/game";
 import { shortAddress, transfer } from "@/utils/chain";
 import { randInt } from "@/utils/math";
 import { getStorage, StorageKey } from "@/utils/storage";
-import { useAccounts, useAgent } from "@nfid/identitykit/react";
+import { Principal } from "@dfinity/principal";
+import { useAccounts, useAgent, useAuth } from "@nfid/identitykit/react";
 import { Button, Col, Divider, Input, InputNumber, Row, Select, Typography } from "antd";
-import { isUndefined } from "lodash";
-import Image from "next/image";
+import { isUndefined, set } from "lodash";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -21,7 +21,7 @@ import useSWR from "swr";
 
 const { Title, Text } = Typography;
 
-const allGames: Pick<GameInfo, 'name' | 'slug' | 'icon' | 'totalPrizePool' | 'largestPrizePool' | 'playingBattles' | 'contractAddress' | 'splashImg'>[] = [
+const allGames: Pick<GameInfo, 'name' | 'slug' | 'icon' | 'totalPrizePool' | 'largestPrizePool' | 'playingBattles' | 'splashImg'>[] = [
     {
         name: "Sudoku",
         slug: "sudoku",
@@ -29,7 +29,6 @@ const allGames: Pick<GameInfo, 'name' | 'slug' | 'icon' | 'totalPrizePool' | 'la
         totalPrizePool: randInt(1000, 10000),
         largestPrizePool: 600,
         playingBattles: randInt(3, 10),
-        contractAddress: process.env.SUDOKU_CONTRACT,
         splashImg: "https://reactjsexample.com/content/images/2020/04/A-Sudoku-web-app-in-React.png"
     },
     {
@@ -39,20 +38,19 @@ const allGames: Pick<GameInfo, 'name' | 'slug' | 'icon' | 'totalPrizePool' | 'la
         totalPrizePool: randInt(1000, 10000),
         largestPrizePool: 400,
         playingBattles: randInt(3, 10),
-        contractAddress: process.env.SUDOKU_CONTRACT,
         splashImg: "https://static.tvtropes.org/pmwiki/pub/images/sokoban_6694.png"
     }
 ];
 
 export default function NewBattlePage() {
     const {
-        data: serviceFee,
+        data: gameInfo,
         isLoading
-    } = useSWR("service-fee", GameAPI.getServiceFee);
+    } = useSWR("game-info", GameAPI.getGameInfo);
 
     const router = useRouter();
 
-    const accounts = useAccounts();
+    const { user: currentWallet } = useAuth();
     const icpAgent = useAgent({
         host: process.env.ICP_API_HOST
     });
@@ -128,12 +126,12 @@ export default function NewBattlePage() {
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Service fee</Text>
-                                <Text strong className="text-text uppercase">{serviceFee}</Text>
+                                <Text strong className="text-text uppercase">{gameInfo?.serviceFee}</Text>
                                 <Text className="uppercase">{process.env.TOKEN}</Text>
                             </div>
                             <div className="flex gap-1 items-center text-base">
                                 <Title className="flex-1" level={4}>Total</Title>
-                                <Text strong className="uppercase">{depositPrice + (serviceFee ?? 0)}</Text>
+                                <Text strong className="uppercase">{depositPrice + (gameInfo?.serviceFee ?? 0)}</Text>
                                 <Text className="uppercase text-muted">{process.env.TOKEN}</Text>
                             </div>
                             <Button type="primary" className="w-full mt-3 h-[50px]" disabled={confirmable()} onClick={handleConfirm}>
@@ -177,8 +175,8 @@ export default function NewBattlePage() {
                         <div className="flex-1 flex flex-col gap-3">
                             <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Contract: </Text>
-                                <HiddenCopyableText textToCopy={allGames[selectedGame].contractAddress}>
-                                    <Text className="text-muted font-semibold">{shortAddress(allGames[selectedGame].contractAddress)}</Text>
+                                <HiddenCopyableText textToCopy={gameInfo?.gameContract}>
+                                    <Text className="text-muted font-semibold">{gameInfo?.gameContract && shortAddress(gameInfo?.gameContract)}</Text>
                                 </HiddenCopyableText>
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
@@ -203,11 +201,11 @@ export default function NewBattlePage() {
     )
 
     async function handleConfirm() {
-        if (isUndefined(accounts?.[0]) || isUndefined(icpAgent)) {
+        if (isUndefined(currentWallet) || isUndefined(icpAgent)) {
             toast.error("Please connect your wallet");
             return;
         }
-        if (isUndefined(serviceFee)) {
+        if (isUndefined(gameInfo)) {
             toast.error("Service fee is not available");
             return;
         }
@@ -222,6 +220,7 @@ export default function NewBattlePage() {
                 invitationPayload,
                 contextId
             } = await GameAPI.createNewTeam(nodePublicKey);
+            localStorage.setItem(StorageKey.CONTEXT_ID, contextId);
             setCreatingTeam(false);
 
             setJoiningTeam(true);
@@ -229,22 +228,28 @@ export default function NewBattlePage() {
             toast.success(`Successfully joined context ${contextId}`);
             setJoiningTeam(false);
 
-            await transfer(icpAgent, accounts[0].principal, depositPrice + serviceFee);
-
             setCreatingBattle(true);
-            let battleId = await GameAPI.createNewBattle(depositPrice, accounts[0].principal);
+            let transferRes = await transfer(icpAgent, Principal.fromText(gameInfo.gameContract), depositPrice + gameInfo.serviceFee);
+            toast.info(`Transfer successful: ${transferRes}`);
+            let battleId = await GameAPI.createNewBattle(depositPrice, currentWallet.principal);
             setCreatingBattle(false);
 
             setJoiningBattle(true);
-            await GameAPI.joinBattle(battleId, accounts[0].principal);
+            await GameAPI.joinBattle(battleId, currentWallet.principal);
+            setJoiningBattle(false);
 
+            router.push(`/games/sudoku/${battleId}`);
         } catch (error) {
             if (error instanceof Error) {
                 toast.error(error.message);
             } else {
-                toast.error("unknown error");
+                toast.error(JSON.stringify(error));
             }
         }
+        setCreatingBattle(false);
+        setJoiningBattle(false);
+        setCreatingTeam(false);
+        setJoiningTeam(false);
     }
 
     function confirmable() {

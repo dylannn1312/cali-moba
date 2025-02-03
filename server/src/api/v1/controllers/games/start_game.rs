@@ -5,6 +5,7 @@ use crate::api::v1::utils::ic_caller::SudokuContract;
 use crate::config::env_config::env;
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct StartGameReq {
     battle_id: usize,
     initial_state: Vec<(u8, u8)>,

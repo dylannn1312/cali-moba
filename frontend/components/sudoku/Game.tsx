@@ -8,11 +8,8 @@ import { getUniqueSudoku } from './solver/UniqueSudoku';
 import { useSudokuContext } from './context/SudokuContext';
 import { Button, Modal, Typography } from 'antd';
 import { SwishSpinner } from '../common/SwishSpinner';
-import { useChain } from '@cosmos-kit/react';
 import { isUndefined, set } from 'lodash';
 import { toast } from 'react-toastify';
-import { calculateFee } from '@cosmjs/stargate';
-import { gasPrice } from '@/utils/chain';
 import { GameAPI } from '@/api/gameAPI';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -22,11 +19,11 @@ const { Title, Text } = Typography;
  * Game is the main React component.
  */
 export const SudokuGame = ({
-  battle_id,
+  battleId,
   onVerifySuccess,
   onClaimSuccess
 }: {
-  battle_id: number;
+  battleId: number;
   onVerifySuccess: (txHash: string) => void;
   onClaimSuccess: (txHash: string) => void
 }) => {
@@ -250,8 +247,6 @@ export const SudokuGame = ({
 
   const privateProof = useRef(false);
 
-  const { getSigningCosmWasmClient, address } = useChain(process.env.CHAIN_NAME);
-
   const solution = [
     1, 4, 5, 6, 2, 3, 4, 5, 9, 2, 3, 6, 7, 2, 3, 6, 1, 7, 9, 4, 5, 8, 1, 2, 5, 8, 4, 3, 9,
     6, 7, 7, 6, 4, 9, 1, 5, 3, 8, 2, 3, 9, 8, 6, 2, 7, 5, 1, 4, 5, 8, 2, 3, 6, 1, 7, 4, 9,
@@ -363,114 +358,114 @@ export const SudokuGame = ({
   );
 
   async function handlePublicSolution() {
-    privateProof.current = false;
-    if (isUndefined(address)) {
-      toast.error("Please connect to your wallet first");
-    } else {
-      try {
-        const client = await getSigningCosmWasmClient();
-        setSubmittingProof(true);
+    // privateProof.current = false;
+    // if (isUndefined(address)) {
+    //   toast.error("Please connect to your wallet first");
+    // } else {
+    //   try {
+    //     const client = await getSigningCosmWasmClient();
+    //     setSubmittingProof(true);
 
-        const tx = await client.execute(
-          address,
-          process.env.SUDOKU_CONTRACT,
-          {
-            submit_solution: {
-              battle_id,
-              solution: {
-                public: solution
-              }
-            }
-          },
-          calculateFee(200000, gasPrice),
-        );
-        setProofSubmitted(true);
-        onVerifySuccess(tx.transactionHash);
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("unknown error");
-        }
-      }
-      setSubmittingProof(false);
-    }
+    //     const tx = await client.execute(
+    //       address,
+    //       process.env.SUDOKU_CONTRACT,
+    //       {
+    //         submit_solution: {
+    //           battleId,
+    //           solution: {
+    //             public: solution
+    //           }
+    //         }
+    //       },
+    //       calculateFee(200000, gasPrice),
+    //     );
+    //     setProofSubmitted(true);
+    //     onVerifySuccess(tx.transactionHash);
+    //   } catch (error) {
+    //     if (error instanceof Error) {
+    //       toast.error(error.message);
+    //     } else {
+    //       toast.error("unknown error");
+    //     }
+    //   }
+    //   setSubmittingProof(false);
+    // }
 
   }
 
   async function handleProveSolution() {
-    privateProof.current = true;
-    if (isUndefined(address)) {
-      toast.error("Please connect to your wallet first");
-    } else {
-      try {
-        setGeneratingProof(true);
-        const proof = await GameAPI.generateProof([[0, 8], [1, 7], [7, 9], [14, 8], [17, 1]], solution);
-        setGeneratingProof(false);
+    // privateProof.current = true;
+    // if (isUndefined(address)) {
+    //   toast.error("Please connect to your wallet first");
+    // } else {
+    //   try {
+    //     setGeneratingProof(true);
+    //     const proof = await GameAPI.generateProof([[0, 8], [1, 7], [7, 9], [14, 8], [17, 1]], solution);
+    //     setGeneratingProof(false);
 
-        const client = await getSigningCosmWasmClient();
-        setSubmittingProof(true);
+    //     const client = await getSigningCosmWasmClient();
+    //     setSubmittingProof(true);
 
-        const tx = await client.execute(
-          address,
-          process.env.SUDOKU_CONTRACT,
-          {
-            submit_solution: {
-              battle_id,
-              solution: {
-                private: {
-                  proof: {
-                    groth16: proof.proof_bytes
-                  },
-                  public_values: proof.public_input_bytes
-                }
-              }
-            }
-          },
-          calculateFee(200000, gasPrice),
-        );
-        setProofSubmitted(true);
-        onVerifySuccess(tx.transactionHash);
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("unknown error");
-        }
-      }
-      setSubmittingProof(false);
-      setGeneratingProof(false);
-    }
+    //     const tx = await client.execute(
+    //       address,
+    //       process.env.SUDOKU_CONTRACT,
+    //       {
+    //         submit_solution: {
+    //           battleId,
+    //           solution: {
+    //             private: {
+    //               proof: {
+    //                 groth16: proof.proof_bytes
+    //               },
+    //               public_values: proof.public_input_bytes
+    //             }
+    //           }
+    //         }
+    //       },
+    //       calculateFee(200000, gasPrice),
+    //     );
+    //     setProofSubmitted(true);
+    //     onVerifySuccess(tx.transactionHash);
+    //   } catch (error) {
+    //     if (error instanceof Error) {
+    //       toast.error(error.message);
+    //     } else {
+    //       toast.error("unknown error");
+    //     }
+    //   }
+    //   setSubmittingProof(false);
+    //   setGeneratingProof(false);
+    // }
   }
 
   async function handleClaimReward() {
-    if (isUndefined(address)) {
-      toast.error("Please connect to your wallet first");
-    } else {
-      try {
-        setClaiming(true);
-        const client = await getSigningCosmWasmClient();
-        setClaimed(false);
-        const tx = await client.execute(
-          address,
-          process.env.SUDOKU_CONTRACT,
-          {
-            claim_reward: {
-              battle_id
-            }
-          },
-          calculateFee(200000, gasPrice),
-        );
-        setClaimed(true);
-        onClaimSuccess(tx.transactionHash);
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("unknown error");
-        }
-      }
-      setClaiming(false);
-    }
+    // if (isUndefined(address)) {
+    //   toast.error("Please connect to your wallet first");
+    // } else {
+    //   try {
+    //     setClaiming(true);
+    //     const client = await getSigningCosmWasmClient();
+    //     setClaimed(false);
+    //     const tx = await client.execute(
+    //       address,
+    //       process.env.SUDOKU_CONTRACT,
+    //       {
+    //         claim_reward: {
+    //           battleId
+    //         }
+    //       },
+    //       calculateFee(200000, gasPrice),
+    //     );
+    //     setClaimed(true);
+    //     onClaimSuccess(tx.transactionHash);
+    //   } catch (error) {
+    //     if (error instanceof Error) {
+    //       toast.error(error.message);
+    //     } else {
+    //       toast.error("unknown error");
+    //     }
+    //   }
+    //   setClaiming(false);
+    // }
   }
 }

@@ -2,7 +2,6 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
         API_URL: string;
-        SUDOKU_CONTRACT: string;
         ICP_API_HOST: string;
         TOKEN: string;
         TOKEN_DECIMALS: number;

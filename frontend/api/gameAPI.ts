@@ -3,16 +3,24 @@ import { httpService } from "./httpService";
 import { Principal } from "@dfinity/principal";
 
 export class GameAPI {
-    static async getServiceFee(): Promise<number> {
-        let fee = await httpService.get<any, number>("/games/service-fee");
-        console.log(fee);
-        return fee / process.env.TOKEN_DECIMALS;
+    static async getGameInfo(): Promise<{
+        gameContract: string,
+        serviceFee: number,
+        applicationId: string,
+    }> {
+        let res = await httpService.get<any, {
+            gameContract: string,
+            serviceFee: number,
+            applicationId: string,
+        }>("/games/info");
+        res.serviceFee /= process.env.TOKEN_DECIMALS;
+        return res;
     }
 
     static async createNewBattle(depositPrice: number, creator: Principal): Promise<number> {
         depositPrice *= process.env.TOKEN_DECIMALS;
         let response = await httpService.post<any, any>("/games/battle", {
-            deposit_price: depositPrice,
+            depositPrice,
             creator: creator.toString()
         });
         console.log(response);
@@ -26,6 +34,19 @@ export class GameAPI {
         });
     }
 
+    static async getBattleInfo(battleId: number): Promise<{
+        initial_state?: [number, number][],
+        creator: string,
+        deposit_price: number,
+        service_fee: number,
+        players: string[],
+    }> {
+        let res = await httpService.get<any, any>(`/games/battle/info/${battleId}`);
+        res.deposit_price /= process.env.TOKEN_DECIMALS;
+        res.service_fee /= process.env.TOKEN_DECIMALS;
+        return res;
+    }
+
     static async createNewTeam(nodePublicKey: string): Promise<{
         invitationPayload: string,
         contextId: string
@@ -37,24 +58,24 @@ export class GameAPI {
         return response;
     }
 
-    static async startGame(initial_state: [number, number][], battle_id: number): Promise<string> {
+    static async startGame(initialState: [number, number][], battleId: number): Promise<string> {
         let txHash = await httpService.post<any, any>("/games/start-game", {
-            initial_state,
-            battle_id
+            initialState,
+            battleId
         });
         console.log(txHash);
         return txHash;
     }
 
-    static async generateProof(initial_state: [number, number][], solution: number[]): Promise<{
-        proof_bytes: string,
-        public_input_bytes: string
+    static async generateProof(initialState: [number, number][], solution: number[]): Promise<{
+        proofBytes: string,
+        publicInputBytes: string
     }> {
         let proof = await httpService.post<any, {
-            proof_bytes: string,
-            public_input_bytes: string
+            proofBytes: string,
+            publicInputBytes: string
         }>("/games/generate-proof", {
-            initial_state,
+            initialState,
             solution
         });
         console.log(proof);

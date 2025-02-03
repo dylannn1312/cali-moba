@@ -13,6 +13,7 @@ type GlobalState = record {
   owner : principal;
   owner_profit : nat;
 };
+type PlayerContribution = record { player : principal; percent : float32 };
 type Result = variant { Ok : nat64; Err : ContractError };
 type Result_1 = variant { Ok : SudokuGame; Err : ContractError };
 type Result_2 = variant { Ok; Err : ContractError };
@@ -25,17 +26,17 @@ type SudokuGame = record {
   creator : principal;
   initial_state : opt vec record { nat8; nat8 };
   service_fee : nat;
-  winner : opt principal;
   claimed : bool;
   players : vec principal;
   solution : opt GameSolution;
   deposit_price : nat;
+  winners : opt vec PlayerContribution;
 };
 service : (text, principal) -> {
   create_new_battle : (nat, nat, principal) -> (Result);
-  get_global_state : () -> (GlobalState) query;
   get_battle_info : (nat64) -> (Result_1) query;
+  get_global_state : () -> (GlobalState) query;
   join_battle : (nat64, principal) -> (Result_2);
   start_game : (nat64, vec record { nat8; nat8 }) -> (Result_2);
-  submit_solution : (nat64, GameSolution) -> (Result_2);
+  submit_solution : (nat64, GameSolution, vec PlayerContribution) -> (Result_2);
 }

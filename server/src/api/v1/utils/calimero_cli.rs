@@ -10,6 +10,6 @@ pub async fn run_calimero_cmd(node_name: &str, cmd: &str) -> anyhow::Result<Valu
     if cmd.status.success() {
         Ok(serde_json::from_slice(&cmd.stdout)?)
     } else {
-        anyhow::bail!("Failed to execute calimero command: {:?}", cmd)
+        anyhow::bail!("Failed to execute calimero command: {}\nError: {:?}", args, String::from_utf8_lossy(&cmd.stderr))
     }
 }

@@ -17,7 +17,7 @@ export async function transfer(agent: Agent, to: Principal, smallAmount: number)
     // so individual ledger canister idl's don't need to be imported.
     const actor = Actor.createActor(idlFactory, {
         agent,
-        canisterId: process.env.ICP_LEDGER_CANISTER_ID,
+        canisterId: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
     })
 
     const address = AccountIdentifier.fromPrincipal({

@@ -21,3 +21,9 @@ export const battleStatusColor: Record<BattleStatus, string> = {
     [BattleStatus.Pending]: "#11DAF4",
     [BattleStatus.Finished]: "#BEC8C8"
 }
+
+export interface SetSudokuValueEvent {
+    position: number,
+    value: number,
+    editor: string
+}

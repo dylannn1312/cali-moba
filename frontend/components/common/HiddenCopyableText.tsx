@@ -11,7 +11,7 @@ export default function HiddenCopyableText(props: TextProps & {textToCopy?: stri
             copyable={{
                 icon: [
                     <Text key='0' {...iconProps}>{children}</Text>,
-                    <Text key='0' {...iconProps}>{children}</Text>
+                    <Text key='1' {...iconProps}>{children}</Text>
                 ],
                 text: textToCopy ?? children?.toString() ?? ''
             }}

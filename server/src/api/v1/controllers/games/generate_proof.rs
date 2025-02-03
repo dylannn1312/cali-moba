@@ -5,12 +5,14 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GenerateProofReq {
     initial_state: Vec<(u8, u8)>,
     solution: Vec<u8>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GenerateProofRes {
     proof_bytes: String,
     public_input_bytes: String

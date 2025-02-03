@@ -1,6 +1,6 @@
 use crate::error::ContractError;
 use crate::error::ContractError::{InvalidAction, InvalidSolution};
-use crate::game::{GameSolution, SudokuGame};
+use crate::game::{GameSolution, PlayerContribution, SudokuGame};
 use crate::logic::check_solution;
 use crate::state::{GlobalState, GAME_STORAGE, OWNER, OWNER_PROFIT, VERIFIER, VK};
 use candid::Principal;
@@ -56,7 +56,7 @@ fn create_new_battle(
             service_fee,
             players: vec![],
             solution: None,
-            winner: None,
+            winners: None,
             claimed: false,
         });
         Ok(new_battle_id)
@@ -76,7 +76,7 @@ fn join_battle(battle_id: usize, player: Principal) -> Result<(), ContractError>
         let game = games
             .get_mut(battle_id)
             .ok_or(InvalidAction("battle not found".to_string()))?;
-        if game.winner.is_some() {
+        if game.winners.is_some() {
             return Err(InvalidAction("the game is overed".to_string()));
         }
         if game.initial_state.is_some() {
@@ -118,21 +118,30 @@ fn start_game(battle_id: usize, initial_state: Vec<(u8, u8)>) -> Result<(), Cont
 }
 
 #[cfg_attr(not(feature = "library"), ic_cdk::update)]
-async fn submit_solution(battle_id: usize, solution: GameSolution) -> Result<(), ContractError> {
+async fn submit_solution(battle_id: usize, solution: GameSolution, player_contributions: Vec<PlayerContribution>) -> Result<(), ContractError> {
+    OWNER.with_borrow(|owner| {
+        if *owner != api::caller() {
+            return Err(InvalidAction("only owner can submit solution".to_string()));
+        }
+        Ok(())
+    })?;
+    
     let verifier = VERIFIER.with_borrow(|v| *v);
     let initial_state = GAME_STORAGE.with_borrow_mut(|games| {
         let game = games
             .get_mut(battle_id)
             .ok_or(InvalidAction("battle not found".to_string()))?;
-        let sender = api::caller();
 
-        if game.winner.is_some() {
+        if game.winners.is_some() {
             return Err(InvalidAction("the game is overed".to_string()));
         }
-        if !game.players.contains(&sender) {
-            return Err(InvalidAction(
-                "the player has not yet participated".to_string(),
-            ));
+        for player in &player_contributions {
+            if !game.players.contains(&player.player) {
+                return Err(InvalidAction(format!("player {} not joined", player.player)));
+            }
+            if player.percent < 0.0 || player.percent > 1.0 {
+                return Err(InvalidAction(format!("invalid percent for player {}", player.player)));
+            }
         }
         if game.initial_state.is_none() {
             return Err(InvalidAction("initial game state is none".to_string()));
@@ -162,7 +171,7 @@ async fn submit_solution(battle_id: usize, solution: GameSolution) -> Result<(),
             .ok_or(InvalidAction("battle not found".to_string()))
             .unwrap();
         game.solution = Some(solution);
-        game.winner = Some(api::caller());
+        game.winners = Some(player_contributions);
     });
     Ok(())
 }
@@ -173,7 +182,7 @@ ic_cdk::export_candid!();
 #[cfg(test)]
 mod tests {
     use crate::error::ContractError;
-    use crate::game::{GameSolution, SudokuGame};
+    use crate::game::{GameSolution, PlayerContribution, SudokuGame};
     use candid::{encode_args, encode_one, Decode, Principal};
     use pocket_ic::{PocketIc, WasmResult};
     use std::str::FromStr;
@@ -268,9 +277,12 @@ mod tests {
         match pic
             .update_call(
                 sudoku_id,
-                player1,
+                owner,
                 "submit_solution",
-                encode_args((battle_id, GameSolution::Private(sp1_proof()))).unwrap(),
+                encode_args((battle_id, GameSolution::Private(sp1_proof()), vec![PlayerContribution {
+                    player: player1,
+                    percent: 1.0,
+                }])).unwrap(),
             )
             .unwrap()
         {
