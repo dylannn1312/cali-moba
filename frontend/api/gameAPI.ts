@@ -1,31 +1,36 @@
 import { toast } from "react-toastify";
 import { httpService } from "./httpService";
+import { Principal } from "@dfinity/principal";
 
 export class GameAPI {
     static async getServiceFee(): Promise<number> {
         let fee = await httpService.get<any, number>("/games/service-fee");
         console.log(fee);
-        return fee / 1_000_000;
+        return fee / process.env.TOKEN_DECIMALS;
     }
 
-    static async createNewBattle(deposit_price: number, creator: string): Promise<{
-        tx_hash: string,
-        battle_id: number
-    }> {
-        deposit_price *= 1_000_000;
-        let response = await httpService.post<any, any>("/games/new-battle", {
-            deposit_price,
-            creator
+    static async createNewBattle(depositPrice: number, creator: Principal): Promise<number> {
+        depositPrice *= process.env.TOKEN_DECIMALS;
+        let response = await httpService.post<any, any>("/games/battle", {
+            deposit_price: depositPrice,
+            creator: creator.toString()
         });
         console.log(response);
         return response;
+    }
+
+    static async joinBattle(battleId: number, player: Principal): Promise<void> {
+        await httpService.post<any, any>("/games/battle/join", {
+            battleId,
+            player: player.toString()
+        });
     }
 
     static async createNewTeam(nodePublicKey: string): Promise<{
         invitationPayload: string,
         contextId: string
     }> {
-        let response = await httpService.post<any, any>("/games/team/new", {
+        let response = await httpService.post<any, any>("/games/team", {
             nodePublicKey
         });
         toast.info(JSON.stringify(response));

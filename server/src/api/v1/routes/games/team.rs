@@ -8,6 +8,6 @@ pub fn router() -> Router {
     Router::new().nest(
         "/team",
         Router::new()
-            .merge(Router::new().route("/new", post(create_new_team)))
+            .merge(Router::new().route("", post(create_new_team)))
     )
 }

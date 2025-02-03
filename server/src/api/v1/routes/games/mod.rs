@@ -6,6 +6,7 @@ pub mod service_fee;
 pub mod start_game;
 pub mod join_battle;
 pub mod team;
+pub mod battle;
 
 pub fn router() -> Router {
     Router::new().nest(

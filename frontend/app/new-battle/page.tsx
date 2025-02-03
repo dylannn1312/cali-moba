@@ -7,9 +7,10 @@ import ArrowLeftIcon from "@/components/common/icons/ArrowLeftIcon";
 import SearchBar from "@/components/common/SearchBar/SearchBar";
 import { THEME } from "@/styles/theme";
 import { GameInfo } from "@/types/game";
-import { shortAddress } from "@/utils/chain";
+import { shortAddress, transfer } from "@/utils/chain";
 import { randInt } from "@/utils/math";
-import { StorageKey } from "@/utils/storage";
+import { getStorage, StorageKey } from "@/utils/storage";
+import { useAccounts, useAgent } from "@nfid/identitykit/react";
 import { Button, Col, Divider, Input, InputNumber, Row, Select, Typography } from "antd";
 import { isUndefined } from "lodash";
 import Image from "next/image";
@@ -51,14 +52,16 @@ export default function NewBattlePage() {
 
     const router = useRouter();
 
-    // const { address, getSigningCosmWasmClient } = useChain(process.env.CHAIN_NAME);
+    const accounts = useAccounts();
+    const icpAgent = useAgent({
+        host: process.env.ICP_API_HOST
+    });
 
     const [depositPrice, setDepositPrice] = useState(0);
-    const [nodeUrl, setNodeUrl] = useState('');
-    const [nodePublicKey, setNodePublicKey] = useState('');
-    const [nodePrivateKey, setNodePrivateKey] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
     const [selectedGame, setSelectedGame] = useState(0);
+    const [creatingTeam, setCreatingTeam] = useState(false);
+    const [joiningTeam, setJoiningTeam] = useState(false);
     const [creatingBattle, setCreatingBattle] = useState(false);
     const [joiningBattle, setJoiningBattle] = useState(false);
 
@@ -124,11 +127,6 @@ export default function NewBattlePage() {
                                 <Text className="uppercase">{process.env.TOKEN}</Text>
                             </div>
                             <div className="flex text-muted gap-1 items-center text-base">
-                                <Text className="flex-1">Number of players</Text>
-                                <Text strong className="text-text uppercase">{nodePublicKey}</Text>
-                                <Text className="uppercase">player</Text>
-                            </div>
-                            <div className="flex text-muted gap-1 items-center text-base">
                                 <Text className="flex-1">Service fee</Text>
                                 <Text strong className="text-text uppercase">{serviceFee}</Text>
                                 <Text className="uppercase">{process.env.TOKEN}</Text>
@@ -139,7 +137,7 @@ export default function NewBattlePage() {
                                 <Text className="uppercase text-muted">{process.env.TOKEN}</Text>
                             </div>
                             <Button type="primary" className="w-full mt-3 h-[50px]" disabled={confirmable()} onClick={handleConfirm}>
-                                <strong className="text-2xl text-text">{creatingBattle ? "Creating battle..." : (joiningBattle ? "Joining battle..." : "Confirm")}</strong>
+                                <strong className="text-2xl text-text">{confirmText()}</strong>
                             </Button>
                         </div>
                     </div>
@@ -205,14 +203,40 @@ export default function NewBattlePage() {
     )
 
     async function handleConfirm() {
+        if (isUndefined(accounts?.[0]) || isUndefined(icpAgent)) {
+            toast.error("Please connect your wallet");
+            return;
+        }
+        if (isUndefined(serviceFee)) {
+            toast.error("Service fee is not available");
+            return;
+        }
+
         try {
+            let nodeUrl = getStorage(StorageKey.NODE_URL);
+            let nodePublicKey = getStorage(StorageKey.NODE_PUBLIC_KEY);
+            let nodePrivateKey = getStorage(StorageKey.NODE_PRIVATE_KEY);
+
+            setCreatingTeam(true);
             let {
                 invitationPayload,
                 contextId
             } = await GameAPI.createNewTeam(nodePublicKey);
+            setCreatingTeam(false);
 
+            setJoiningTeam(true);
             await caliAdminService(nodeUrl).joinContext(contextId, nodePrivateKey, invitationPayload);
             toast.success(`Successfully joined context ${contextId}`);
+            setJoiningTeam(false);
+
+            await transfer(icpAgent, accounts[0].principal, depositPrice + serviceFee);
+
+            setCreatingBattle(true);
+            let battleId = await GameAPI.createNewBattle(depositPrice, accounts[0].principal);
+            setCreatingBattle(false);
+
+            setJoiningBattle(true);
+            await GameAPI.joinBattle(battleId, accounts[0].principal);
 
         } catch (error) {
             if (error instanceof Error) {
@@ -224,6 +248,23 @@ export default function NewBattlePage() {
     }
 
     function confirmable() {
-        return depositPrice === 0 || nodeUrl === '' || nodePublicKey === '' || nodePrivateKey === '' || creatingBattle || joiningBattle;
+        return depositPrice === 0 || creatingBattle || joiningBattle || creatingTeam || joiningTeam;
     }
+
+    function confirmText() {
+        if (creatingBattle) {
+            return "Creating battle...";
+        }
+        if (joiningBattle) {
+            return "Joining battle...";
+        }
+        if (creatingTeam) {
+            return "Creating team...";
+        }
+        if (joiningTeam) {
+            return "Joining team...";
+        }
+        return "Confirm";
+    }
+
 }

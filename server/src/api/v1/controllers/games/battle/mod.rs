@@ -1,3 +1,5 @@
+pub mod join_battle;
+
 use crate::api::v1::errors::AppError;
 use crate::api::v1::utils::ic_caller::SudokuContract;
 use crate::config::env_config::env;
@@ -6,6 +8,7 @@ use ic_agent::export::Principal;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateNewBattleReq {
     deposit_price: u128,
     creator: Principal,
@@ -24,10 +27,10 @@ pub async fn create_new_battle(
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use crate::api::v1::controllers::games::new_battle::{create_new_battle, CreateNewBattleReq};
     use crate::config::config_app;
     use axum::Json;
     use ic_agent::export::Principal;
+    use crate::api::v1::controllers::games::battle::{create_new_battle, CreateNewBattleReq};
 
     #[tokio::test]
     async fn test_create_new_battle() {
@@ -36,8 +39,8 @@ mod tests {
             deposit_price: 1,
             creator: Principal::from_str("pnklf-ojyec-2l2al-nuxfq-3vss6-udii2-2txam-wusja-usc54-n5uos-gae").unwrap(),
         }))
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         dbg!(res.0);
     }
 }

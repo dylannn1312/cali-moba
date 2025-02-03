@@ -21,7 +21,7 @@ pub async fn join_battle(Json(game): Json<JoinBattleReq>) -> Result<Json<()>, Ap
 
 #[cfg(test)]
 mod tests {
-    use crate::api::v1::controllers::games::join_battle::{join_battle, JoinBattleReq};
+    use crate::api::v1::controllers::games::battle::join_battle::{join_battle, JoinBattleReq};
     use crate::config::config_app;
     use axum::Json;
     use ic_agent::export::Principal;
