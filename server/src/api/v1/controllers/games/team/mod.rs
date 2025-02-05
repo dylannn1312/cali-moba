@@ -1,3 +1,5 @@
+pub mod invite_to_team;
+
 use crate::api::v1::errors::AppError;
 use crate::api::v1::utils::calimero_cli::run_calimero_cmd;
 use crate::config::env_config::env;
@@ -15,6 +17,7 @@ pub struct CreateTeamReq {
 pub struct CreateTeamRes {
     invitation_payload: String,
     context_id: String,
+    context_identity: String
 }
 
 pub async fn create_new_team(
@@ -42,7 +45,8 @@ pub async fn create_new_team(
         .get("memberPublicKey")
         .unwrap()
         .as_str()
-        .unwrap();
+        .unwrap()
+        .to_string();
 
     let res = run_calimero_cmd(
         "admin",
@@ -54,6 +58,7 @@ pub async fn create_new_team(
     Ok(Json(CreateTeamRes {
         invitation_payload,
         context_id,
+        context_identity
     }))
 }
 

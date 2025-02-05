@@ -1,24 +1,16 @@
 use calimero_sdk::app;
 use calimero_sdk::borsh::{BorshDeserialize, BorshSerialize};
-use calimero_storage::collections::UnorderedMap;
+use calimero_storage::collections::{StoreError, UnorderedMap};
 use std::str::FromStr;
 
-#[app::event]
-pub enum StoreEvent<'a> {
-    ValueSet {
-        position: &'a u8,
-        value: &'a u8,
-        editor: &'a str,
-        name: &'a str
-    },
-}
-
-#[app::state(emits = for<'a> StoreEvent<'a>)]
+#[app::state]
 #[derive(Default, BorshSerialize, BorshDeserialize)]
 #[borsh(crate = "calimero_sdk::borsh")]
 struct BattleState {
     /// table[position] = (value, editor)
     table: UnorderedMap<String, (u8, String, String)>,
+    last_changed_cell: Option<(u8, u8, String, String)>,
+    last_removed_cell: Option<u8>
 }
 
 #[app::logic]
@@ -27,23 +19,33 @@ impl BattleState {
     pub fn init() -> Self {
         Self {
             table: UnorderedMap::new(),
+            last_changed_cell: None,
+            last_removed_cell: None
         }
     }
 
-    pub fn set(&mut self, position: u8, value: u8, editor_address: String, editor_name: String) {
-        app::emit!(StoreEvent::ValueSet {
-            position: &position,
-            value: &value,
-            editor: &editor_address,
-            name: &editor_name
-        });
+    pub fn set_cell(&mut self, position: u8, value: u8, editor_address: String, editor_name: String) -> Result<(), StoreError>  {
         self.table
-            .insert(position.to_string(), (value, editor_address, editor_name))
-            .unwrap();
+            .insert(position.to_string(), (value, editor_address.clone(), editor_name.clone()))?;
+        self.last_changed_cell = Some((position, value, editor_address, editor_name));
+        Ok(())
     }
 
-    pub fn get(&self, position: u8) -> Option<(u8, String, String)> {
+    pub fn remove_cell(&mut self, position: u8) -> Result<(), StoreError> {
+        self.table.remove(&position.to_string())?;
+        Ok(())
+    }
+
+    pub fn get_cell(&self, position: u8) -> Option<(u8, String, String)> {
         self.table.get(&position.to_string()).unwrap()
+    }
+
+    pub fn get_last_changed_cell(&self) -> Option<(u8, u8, String, String)> {
+        self.last_changed_cell.clone()
+    }
+
+    pub fn get_last_removed_cell(&self) -> Option<u8> {
+        self.last_removed_cell
     }
 
     pub fn get_table(&self) -> Vec<(u8, u8, String, String)> {

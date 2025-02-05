@@ -1,7 +1,7 @@
 // import { getAppEndpointKey } from '../../utils/storage';
 import { createAuthHeader } from '@/auth/headers';
 import { getNearEnvironment } from '@/utils/node';
-import { getStorage, StorageKey } from '@/utils/storage';
+import { getStoragePanic, StorageKey } from '@/utils/storage';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 // import translations from '../../constants/en.global.json';
 // import { createAppMetadata } from '../../utils/metadata';

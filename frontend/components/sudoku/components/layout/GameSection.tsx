@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSudokuContext } from '../../context/SudokuContext';
+import { toast } from 'react-toastify';
 
 type GameSectionProps = {
   onClick: (indexOfArray: number) => void

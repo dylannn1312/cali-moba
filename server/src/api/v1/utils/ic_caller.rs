@@ -7,7 +7,7 @@ use ic_agent::Agent;
 use ic_utils::call::SyncCall;
 use ic_utils::canister::CanisterBuilder;
 use ic_utils::Canister;
-use sudoku::game::SudokuGame;
+use sudoku::game::{GameSolution, PlayerContribution, SudokuGame};
 
 #[derive(Debug, Clone)]
 pub struct IcCaller<'a> {
@@ -53,11 +53,14 @@ impl<'a> SudokuContract<'a> {
             .query("get_battle_info")
             .with_arg(battle_id)
             .build::<(Result<SudokuGame, sudoku::error::ContractError>,)>();
-        let res = request.call().await?.0
+        let res = request
+            .call()
+            .await?
+            .0
             .map_err(|e| anyhow!("Fail to get battle info: {:?}", e))?;
         Ok(res)
     }
-    
+
     pub async fn create_new_battle(
         &self,
         deposit_price: u128,
@@ -78,11 +81,7 @@ impl<'a> SudokuContract<'a> {
         Ok(battle_id)
     }
 
-    pub async fn join_battle(
-        &self,
-        battle_id: usize,
-        player: Principal,
-    ) -> anyhow::Result<()> {
+    pub async fn join_battle(&self, battle_id: usize, player: Principal) -> anyhow::Result<()> {
         let request = self
             .0
             .canister
@@ -107,6 +106,21 @@ impl<'a> SudokuContract<'a> {
             .canister
             .update("start_game")
             .with_args((battle_id, initial_state))
+            .build::<(Result<(), sudoku::error::ContractError>,)>();
+        request
+            .call_and_wait()
+            .await?
+            .0
+            .map_err(|e| anyhow!("Fail to start game: {:?}", e))?;
+        Ok(())
+    }
+
+    pub async fn submit_solution(&self, battle_id: usize, solution: GameSolution, player_contributions: Vec<PlayerContribution>) -> anyhow::Result<()> {
+        let request = self
+            .0
+            .canister
+            .update("submit_solution")
+            .with_args((battle_id, solution, player_contributions))
             .build::<(Result<(), sudoku::error::ContractError>,)>();
         request
             .call_and_wait()

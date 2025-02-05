@@ -2,6 +2,7 @@
 // import { HealthStatus } from '../api/dataSource/NodeDataSource';
 // import { ResponseData } from '../api/response';
 
+import { isUndefined } from "lodash";
 import { toast } from "react-toastify";
 
 // export const APP_URL = 'app-url';
@@ -105,15 +106,30 @@ export enum StorageKey {
     NODE_PRIVATE_KEY = "node-private-key",
     ACCESS_TOKEN = "access-token",
     CONTEXT_ID = "context-id",
+    CONTEXT_IDENTITY = "context-identity",
 }
 
-export function getStorage(key: StorageKey): string {
-    let item = localStorage.getItem(key);
-    if (!item) {
-        throw new Error(`Storage key ${key} not found`);
+export function getStoragePanic(key: StorageKey): string {
+    if (typeof window !== "undefined" && window.localStorage) {
+        let item = localStorage.getItem(key);
+        if (!item) {
+            throw new Error(`Storage key ${key} not found`);
+        }
+        if (key === StorageKey.ACCESS_TOKEN) {
+            item = item.replace(/"/g, '');
+        }
+        return item;
     }
-    if (key === StorageKey.ACCESS_TOKEN) {
-        item = item.replace(/"/g, '');
+    throw new Error("Storage not available");
+}
+
+export function getStorage(key: StorageKey): string | null {
+    if (typeof window !== "undefined" && window.localStorage) {
+        return localStorage.getItem(key);
     }
-    return item;
+    return null;
+}
+
+export function isInClient() {
+    return typeof window !== "undefined";
 }

@@ -6,7 +6,7 @@ import { ConnectedWalletButton, ConnectWalletDropdownMenu, ConnectWalletButton, 
 import { MenuButtonProps } from "@headlessui/react";
 import { shortAddress } from "@/utils/chain";
 import { ClientLogin } from "@calimero-network/calimero-client";
-import { StorageKey } from "@/utils/storage";
+import { getStorage, isInClient, StorageKey } from "@/utils/storage";
 import { CLIENT_KEY } from "@/auth/storage";
 import { getOrCreateKeypair } from "@/auth/ed25519";
 import { toast } from "react-toastify";
@@ -53,7 +53,7 @@ function SetupNode() {
   return (
     <>
       <Button onClick={() => setOpen(true)} className="font-bold rounded-md py-5" type="primary">
-        {localStorage.getItem(StorageKey.NODE_NAME) || 'Setup node'}
+        {isInClient() && getStorage(StorageKey.NODE_NAME) || 'Setup node'}
       </Button>
       <Modal
         open={open}
@@ -73,7 +73,7 @@ function SetupNode() {
               placeholder="Enter your node name"
               className="h-[40px] w-full border-2"
               onChange={(e) => localStorage.setItem(StorageKey.NODE_NAME, e.target.value)}
-              defaultValue={localStorage.getItem(StorageKey.NODE_NAME) || ''}
+              defaultValue={getStorage(StorageKey.NODE_NAME) || ''}
             />
           </div>
           <div className="flex flex-col">
@@ -82,7 +82,7 @@ function SetupNode() {
               placeholder="Enter your node URL"
               className="h-[40px] w-full border-2"
               onChange={(e) => localStorage.setItem(StorageKey.NODE_URL, e.target.value)}
-              defaultValue={localStorage.getItem(StorageKey.NODE_URL) || ''}
+              defaultValue={getStorage(StorageKey.NODE_URL) || ''}
             />
           </div>
           <div className="flex flex-col">
@@ -91,7 +91,7 @@ function SetupNode() {
               placeholder="Enter your node public key"
               className="h-[40px] w-full border-2"
               onChange={(e) => localStorage.setItem(StorageKey.NODE_PUBLIC_KEY, e.target.value)}
-              defaultValue={localStorage.getItem(StorageKey.NODE_PUBLIC_KEY) || ''}
+              defaultValue={getStorage(StorageKey.NODE_PUBLIC_KEY) || ''}
             />
           </div>
           <div className="flex flex-col">
@@ -100,7 +100,7 @@ function SetupNode() {
               placeholder="Enter your node private key"
               className="h-[40px] w-full border-2"
               onChange={(e) => localStorage.setItem(StorageKey.NODE_PRIVATE_KEY, e.target.value)}
-              defaultValue={localStorage.getItem(StorageKey.NODE_PRIVATE_KEY) || ''}
+              defaultValue={getStorage(StorageKey.NODE_PRIVATE_KEY) || ''}
             />
           </div>
           <Button type="primary" onClick={() => setOpen(false)} className="w-full font-bold uppercase mt-5" size="large">Save</Button>

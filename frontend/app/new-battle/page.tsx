@@ -9,7 +9,7 @@ import { THEME } from "@/styles/theme";
 import { GameInfo } from "@/types/game";
 import { shortAddress, transfer } from "@/utils/chain";
 import { randInt } from "@/utils/math";
-import { getStorage, StorageKey } from "@/utils/storage";
+import { getStoragePanic, StorageKey } from "@/utils/storage";
 import { Principal } from "@dfinity/principal";
 import { useAccounts, useAgent, useAuth } from "@nfid/identitykit/react";
 import { Button, Col, Divider, Input, InputNumber, Row, Select, Typography } from "antd";
@@ -211,16 +211,18 @@ export default function NewBattlePage() {
         }
 
         try {
-            let nodeUrl = getStorage(StorageKey.NODE_URL);
-            let nodePublicKey = getStorage(StorageKey.NODE_PUBLIC_KEY);
-            let nodePrivateKey = getStorage(StorageKey.NODE_PRIVATE_KEY);
+            let nodeUrl = getStoragePanic(StorageKey.NODE_URL);
+            let nodePublicKey = getStoragePanic(StorageKey.NODE_PUBLIC_KEY);
+            let nodePrivateKey = getStoragePanic(StorageKey.NODE_PRIVATE_KEY);
 
             setCreatingTeam(true);
             let {
                 invitationPayload,
-                contextId
+                contextId,
+                contextIdentity
             } = await GameAPI.createNewTeam(nodePublicKey);
             localStorage.setItem(StorageKey.CONTEXT_ID, contextId);
+            localStorage.setItem(StorageKey.CONTEXT_IDENTITY, contextIdentity);
             setCreatingTeam(false);
 
             setJoiningTeam(true);
@@ -230,7 +232,7 @@ export default function NewBattlePage() {
 
             setCreatingBattle(true);
             let transferRes = await transfer(icpAgent, Principal.fromText(gameInfo.gameContract), depositPrice + gameInfo.serviceFee);
-            toast.info(`Transfer successful: ${transferRes}`);
+            toast.info(`Transfer successful: ${JSON.stringify(transferRes)}`);
             let battleId = await GameAPI.createNewBattle(depositPrice, currentWallet.principal);
             setCreatingBattle(false);
 
@@ -243,7 +245,7 @@ export default function NewBattlePage() {
             if (error instanceof Error) {
                 toast.error(error.message);
             } else {
-                toast.error(JSON.stringify(error));
+                toast.error(`An error occurred ${error}`);
             }
         }
         setCreatingBattle(false);

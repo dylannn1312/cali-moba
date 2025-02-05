@@ -1,9 +1,7 @@
 use crate::api::v1::errors::AppError;
 use crate::config::env_config::env;
 use axum::Json;
-use ic_agent::export::Principal;
 use serde::{Deserialize, Serialize};
-use crate::api::v1::utils::ic_caller::SudokuContract;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]

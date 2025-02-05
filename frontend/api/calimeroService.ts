@@ -1,4 +1,4 @@
-import { getStorage, StorageKey } from '@/utils/storage';
+import { getStoragePanic, StorageKey } from '@/utils/storage';
 import { JsonRpcClient } from '@calimero-network/calimero-client';
 import { isUndefined } from 'lodash';
 import { toast } from 'react-toastify';
@@ -18,9 +18,8 @@ export class SudokuCaller {
     }
 
     async set(position: number, value: number, editor_address: string) {
-        toast.info(JSON.stringify(getJWTObject()));
         return await this.client.execute({
-            contextId: getStorage(StorageKey.CONTEXT_ID),
+            contextId: getStoragePanic(StorageKey.CONTEXT_ID),
             method: "set",
             argsJson: {
                 position,
@@ -35,7 +34,7 @@ export class SudokuCaller {
 }
 
 function getJWTObject(): JsonWebToken {
-    const token = getStorage(StorageKey.ACCESS_TOKEN);
+    const token = getStoragePanic(StorageKey.ACCESS_TOKEN);
     const parts = token.split('.');
     if (parts.length !== 3) {
         throw new Error('Invalid JWT token');
@@ -45,9 +44,8 @@ function getJWTObject(): JsonWebToken {
 };
 
 function getHeaders() {
-    toast.info(`Bearer ${getStorage(StorageKey.ACCESS_TOKEN)}`);
     return {
-        authorization: `Bearer ${getStorage(StorageKey.ACCESS_TOKEN)}`
+        authorization: `Bearer ${getStoragePanic(StorageKey.ACCESS_TOKEN)}`
     };
 }
 

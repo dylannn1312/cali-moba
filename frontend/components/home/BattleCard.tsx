@@ -14,7 +14,6 @@ export default function BattleCard({
     creator,
     status,
     playerCount,
-    maxPlayers,
     gameInfo,
     depositPrice
 }: BattleInfo) {
@@ -34,7 +33,7 @@ export default function BattleCard({
                 </div>
                 <div className="flex gap-2 items-center">
                     <PeopleIcon color={battleStatusColor[status]} size={16} />
-                    <Text>{`${playerCount}/${maxPlayers}`}</Text>
+                    <Text style={{color: battleStatusColor[status]}}>{playerCount} <Text className="text-muted"></Text></Text>
                 </div>
                 <HiddenCopyableText textToCopy={creator}>
                     <div className="text-muted">

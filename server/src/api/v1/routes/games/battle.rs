@@ -6,6 +6,7 @@ use axum::routing::get;
 use crate::api::v1::controllers::games::battle::battle_info::get_battle_info;
 use crate::api::v1::controllers::games::battle::create_new_battle;
 use crate::api::v1::controllers::games::battle::join_battle::join_battle;
+use crate::api::v1::controllers::games::battle::submit_solution::submit_battle_solution;
 
 pub fn router() -> Router {
     Router::new().nest(
@@ -14,5 +15,6 @@ pub fn router() -> Router {
             .merge(Router::new().route("/", post(create_new_battle)))
             .merge(Router::new().route("/join", post(join_battle)))
             .merge(Router::new().route("/info/{id}", get(get_battle_info)))
+            .merge(Router::new().route("/solution", post(submit_battle_solution)))
     )
 }

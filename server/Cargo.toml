@@ -18,6 +18,7 @@ tower-http = { version = "0.6.2", features = ["cors"]}
 ic-utils = "0.39.3"
 ic-agent = "0.39.3"
 sudoku = { path = "../contracts/sudoku" }
+verifier = { path = "../contracts/verifier" }
 
 [dev-dependencies]
 ethers = "2.0.14"

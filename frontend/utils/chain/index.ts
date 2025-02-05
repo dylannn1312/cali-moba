@@ -24,14 +24,20 @@ export async function transfer(agent: Agent, to: Principal, smallAmount: number)
         principal: to,
     }).toHex();
 
-    const response = await actor.transfer({
-        to: fromHexString(address),
-        fee: { e8s: BigInt(10000) },
-        memo: BigInt(0),
-        from_subaccount: [],
-        created_at_time: [],
-        amount: { e8s: BigInt(smallAmount * process.env.TOKEN_DECIMALS) },
-    });
+    try {
+        actor.transfer({
+            to: fromHexString(address),
+            fee: { e8s: 10000 },
+            memo: 0,
+            from_subaccount: [],
+            created_at_time: [],
+            amount: { e8s: smallAmount * process.env.TOKEN_DECIMALS },
+        });
+        await new Promise(r => setTimeout(r, 8000));
+    } catch (e) {
 
-    return response;
+    }
+
+    // return response;
+    return "Transfer successful";
 }

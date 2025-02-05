@@ -10,7 +10,6 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import InfoIcon from "@/components/common/icons/InfoIcon";
 import ArrowDownIcon from "@/components/common/icons/ArrowDownIcon";
-import TransactionIcon from "@/components/common/icons/TransactionIcon";
 import { THEME } from "@/styles/theme";
 import { toast } from "react-toastify";
 import { LoadingOutlined } from "@ant-design/icons";
@@ -18,13 +17,14 @@ import { ClientLogin, WsSubscriptionsClient } from "@calimero-network/calimero-c
 import useSWR from "swr";
 import { GameAPI } from "@/api/gameAPI";
 import { useAuth } from "@nfid/identitykit/react";
-import { getStorage, StorageKey } from "@/utils/storage";
+import { getStoragePanic, StorageKey } from "@/utils/storage";
 import { usePathname, useRouter } from "next/navigation";
 import PrivateChatIcon from "@/components/common/icons/PrivateChatIcon";
 import { caliAdminService } from "@/api/calimero-admin";
 import { get, isUndefined } from "lodash";
 import { SudokuCaller } from "@/api/calimeroService";
 import { SetSudokuValueEvent } from "@/types/battle";
+import { SwishSpinner } from "@/components/common/SwishSpinner";
 
 const { Title, Text } = Typography;
 
@@ -69,56 +69,15 @@ export default function SudokuGamePage({ params: {
         setCurrentPage(e.key);
     };
 
-    const [txHashes, setTxHashes] = useState([{
-        "description": "Create battle",
-        "txHash": localStorage.getItem("createBattleTxHash") || "0x",
-    }, {
-        "description": "Join battle",
-        "txHash": localStorage.getItem("joinBattleHash") || "0x",
-    }]);
     const [gameStarted, setGameStarted] = useState(false);
     const [waitForStartingGame, setWaitForStartingGame] = useState(false);
     const [caliLogined, setCaliLogined] = useState(false);
 
-    const sudokuCaller = useRef(new SudokuCaller(getStorage(StorageKey.NODE_URL)));
-    const wsClient = useRef(new WsSubscriptionsClient(getStorage(StorageKey.NODE_URL), '/ws'));
-
     useEffect(() => {
-        async function handle() {
-            if (isUndefined(currentWallet)) {
-                return;
-            }
-
-            // Connect to WebSocket
-            await wsClient.current.connect();
-
-            // Subscribe to application events
-            wsClient.current.subscribe([getStorage(StorageKey.CONTEXT_ID)]);
-
-            // Handle incoming events
-            wsClient.current.addCallback((event) => {
-                switch (event.type) {
-                    case 'StateMutation':
-                        toast.success(`State updated: ${event.data.newRoot}`);
-                        break;
-                    case 'ExecutionEvent':
-                        const res: SetSudokuValueEvent = JSON.parse(new TextDecoder().decode(new Uint8Array(event.data.events[0].data)));
-                        toast.success(`Execution event: ${JSON.stringify(res)}`);
-                        break;
-                }
-            });
-
-            // await sudokuCaller.current.set(1, 1, currentWallet.principal.toString());
-
-        }
-
-        handle();
-
-        const wsClientCurrent = wsClient.current;
-        return () => {
-            wsClientCurrent.disconnect();
-        }
-    }, [currentWallet])
+      if (battleInfo?.initial_state) {
+        setGameStarted(true);
+      }
+    }, [battleInfo?.initial_state]);
 
 
     return (
@@ -161,28 +120,31 @@ export default function SudokuGamePage({ params: {
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-2 items-center text-[#AE9EFF] cursor-pointer">
                             <PrivateChatIcon />
-                            <Title className="!mb-0 !text-current flex-1" level={3}>1 Members in team</Title>
+                            <Title className="!mb-0 !text-current flex-1" level={3}>{battleInfo?.players.length ?? 0} Members in team</Title>
                             <ArrowDownIcon />
                         </div>
                         <Text className="text-muted">
                             <Text className="font-semibold">Context ID: </Text>
-                            <HiddenCopyableText textToCopy={getStorage(StorageKey.CONTEXT_ID)} iconProps={{ className: "text-muted" }}>
-                                {shortAddress(getStorage(StorageKey.CONTEXT_ID), 15)}
+                            <HiddenCopyableText textToCopy={getStoragePanic(StorageKey.CONTEXT_ID)} iconProps={{ className: "text-muted" }}>
+                                {shortAddress(getStoragePanic(StorageKey.CONTEXT_ID), 15)}
+                            </HiddenCopyableText>
+                        </Text>
+                        <Text className="text-muted">
+                            <Text className="font-semibold">Context identity: </Text>
+                            <HiddenCopyableText textToCopy={getStoragePanic(StorageKey.CONTEXT_IDENTITY)} iconProps={{ className: "text-muted" }}>
+                                {shortAddress(getStoragePanic(StorageKey.CONTEXT_IDENTITY), 15)}
                             </HiddenCopyableText>
                         </Text>
                         <div className="w-full bg-gray-600 h-[1px]"></div>
                         {
                             battleInfo?.players.map((address) => (
                                 <div className="flex items-center text-muted font-semibold" key={address}>
-                                    <Text className="flex-1">
-                                        node 1
-                                        {address === currentWallet?.principal.toString() &&
-                                            <Text className="text-[#AE9EFF]"> (You)</Text>
-                                        }
-                                    </Text>
                                     <HiddenCopyableText textToCopy={address} iconProps={{ className: "text-muted" }}>
-                                        {shortAddress(address, 15)}
+                                        {shortAddress(address, 23)}
                                     </HiddenCopyableText>
+                                    {address === currentWallet?.principal.toString() &&
+                                        <Text className="text-[#AE9EFF]">&nbsp; (You)</Text>
+                                    }
                                 </div>
                             ))
                         }
@@ -198,15 +160,12 @@ export default function SudokuGamePage({ params: {
                         {
                             battleInfo?.players.map((address) => (
                                 <div className="flex items-center text-muted font-semibold" key={address}>
-                                    <Text className="flex-1">
-                                        node 1
-                                        {address === currentWallet?.principal.toString() &&
-                                            <Text className="text-green-600"> (You)</Text>
-                                        }
-                                    </Text>
                                     <HiddenCopyableText textToCopy={address} iconProps={{ className: "text-muted" }}>
-                                        {shortAddress(address, 15)}
+                                        {shortAddress(address, 23)}
                                     </HiddenCopyableText>
+                                    {address === currentWallet?.principal.toString() &&
+                                        <Text className="text-green-600">&nbsp; (You)</Text>
+                                    }
                                 </div>
                             ))
                         }
@@ -215,26 +174,37 @@ export default function SudokuGamePage({ params: {
                 <SudokuProvider>
                     <div className="flex flex-col gap-8 flex-[2] ">
                         <Menu onClick={onClick} selectedKeys={[currentPage]} mode="horizontal" items={menuItems} className='border-b-transparent min-w-[200px]' />
-                        <div className="items-center justify-center flex flex-col">
+                        <div className={`items-center justify-center flex flex-col h-full rounded-lg py-10 ${gameStarted && caliLogined ? 'bg-white' : ''}`}>
                             {
-                                gameStarted ?
+                                gameStarted && caliLogined ?
                                     <SudokuGame battleId={battleId} onVerifySuccess={handleVerifySuccess} onClaimSuccess={handleClaimSuccess} />
                                     :
                                     <div className="flex flex-col gap-4 items-center">
                                         {
-                                            caliLogined ?
-                                                <ClientLogin getNodeUrl={() => getStorage(StorageKey.NODE_URL)} getApplicationId={
+                                            !caliLogined ?
+                                                <>
+                                                <Text className="text-4xl font-bold text-primary">Authenticate your Calimero node</Text>
+                                                <ClientLogin getNodeUrl={() => getStoragePanic(StorageKey.NODE_URL)} getApplicationId={
                                                     () => gameInfo?.applicationId ?? null
                                                 } sucessRedirect={() => { setCaliLogined(true); router.push(pathName); }} />
+                                                </>
                                                 :
-                                                <Button disabled={waitForStartingGame} type="primary" className="py-6" onClick={handleStartGame}>
-                                                    <div className="flex gap-2 items-center">
-                                                        {waitForStartingGame && <Spin spinning={waitForStartingGame} indicator={<LoadingOutlined spin />} />}
-                                                        <Text className="uppercase font-bold text-xl">
-                                                            Start game
-                                                        </Text>
-                                                    </div>
-                                                </Button>
+                                                (
+                                                    battleInfo?.creator === currentWallet?.principal.toString() ?
+                                                        <Button disabled={waitForStartingGame} type="primary" className="py-6" onClick={handleStartGame}>
+                                                            <div className="flex gap-2 items-center">
+                                                                {waitForStartingGame && <Spin spinning={waitForStartingGame} indicator={<LoadingOutlined spin />} />}
+                                                                <Text className="uppercase font-bold text-xl">
+                                                                    Start game
+                                                                </Text>
+                                                            </div>
+                                                        </Button>
+                                                        :
+                                                        <>
+                                                            <SwishSpinner />
+                                                            <Text className="text-muted font-semibold text-xl">Waiting for the creator to start the game</Text>
+                                                        </>
+                                                )
                                         }
                                     </div>
                             }
@@ -250,37 +220,27 @@ export default function SudokuGamePage({ params: {
             toast.error("Please connect to your wallet first");
             return;
         }
-        try {
-            await sudokuCaller.current.set(1, 3, currentWallet.principal.toString());
-        } catch (err) {
-            toast.error(err.message);
-        }
 
-        // try {
-        //     if (isUndefined(address)) {
-        //         toast.error("Please connect to your wallet first");
-        //     } else {
-        //         setWaitForStartingGame(true);
-        //         let txHash = await GameAPI.startGame([[0, 8], [1, 7], [7, 9], [14, 8], [17, 1]], parseInt(battle_id));
-        //         setTxHashes([...txHashes, { description: "Start game", txHash }]);
-        //         setGameStarted(true);
-        //     }
-        // } catch (error) {
-        //     if (error instanceof Error) {
-        //         toast.error(error.message);
-        //     } else {
-        //         toast.error("unknown error");
-        //     }
-        // }
-        // setWaitForStartingGame(false);
+        try {
+            setWaitForStartingGame(true);
+            await new Promise(r => setTimeout(r, 2000));
+            setGameStarted(true);
+        } catch (error) {
+            if (error instanceof Error) {
+                toast.error(error.message);
+            } else {
+                toast.error("unknown error");
+            }
+        }
+        setWaitForStartingGame(false);
     }
 
     function handleVerifySuccess(txHash: string) {
-        setTxHashes([...txHashes, { description: "Submit solution", txHash }]);
+
     }
 
     function handleClaimSuccess(txHash: string): void {
-        setTxHashes([...txHashes, { description: "Claim reward", txHash }]);
+
     }
 }
 

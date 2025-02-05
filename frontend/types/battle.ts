@@ -11,7 +11,6 @@ export interface BattleInfo {
     creator: string;
     status: BattleStatus;
     playerCount: number;
-    maxPlayers: number;
     gameInfo: Pick<GameInfo, "splashImg" | "name" | "slug">;
     depositPrice: number;
 }
