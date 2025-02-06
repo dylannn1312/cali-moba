@@ -2,28 +2,25 @@
 import { SudokuProvider } from "@/components/sudoku/context/SudokuContext";
 import { SudokuGame } from "@/components/sudoku/Game";
 import "./App.css"
-import { Button, Menu, MenuProps, Progress, ProgressProps, Spin, Typography } from "antd";
+import { Button, Menu, MenuProps, ProgressProps, Spin, Typography } from "antd";
 import PeopleIcon from "@/components/common/icons/PeopleIcon";
 import HiddenCopyableText from "@/components/common/HiddenCopyableText";
 import { shortAddress } from "@/utils/chain";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import InfoIcon from "@/components/common/icons/InfoIcon";
 import ArrowDownIcon from "@/components/common/icons/ArrowDownIcon";
 import { THEME } from "@/styles/theme";
 import { toast } from "react-toastify";
 import { LoadingOutlined } from "@ant-design/icons";
-import { ClientLogin, WsSubscriptionsClient } from "@calimero-network/calimero-client";
+import { ClientLogin } from "@calimero-network/calimero-client";
 import useSWR from "swr";
 import { GameAPI } from "@/api/gameAPI";
 import { useAuth } from "@nfid/identitykit/react";
 import { getStoragePanic, StorageKey } from "@/utils/storage";
 import { usePathname, useRouter } from "next/navigation";
 import PrivateChatIcon from "@/components/common/icons/PrivateChatIcon";
-import { caliAdminService } from "@/api/calimero-admin";
-import { get, isUndefined } from "lodash";
-import { SudokuCaller } from "@/api/calimeroService";
-import { SetSudokuValueEvent } from "@/types/battle";
+import { isUndefined } from "lodash";
 import { SwishSpinner } from "@/components/common/SwishSpinner";
 
 const { Title, Text } = Typography;
@@ -69,9 +66,9 @@ export default function SudokuGamePage({ params: {
         setCurrentPage(e.key);
     };
 
-    const [gameStarted, setGameStarted] = useState(false);
+    const [gameStarted, setGameStarted] = useState(true);
     const [waitForStartingGame, setWaitForStartingGame] = useState(false);
-    const [caliLogined, setCaliLogined] = useState(false);
+    const [caliLogined, setCaliLogined] = useState(true);
 
     useEffect(() => {
       if (battleInfo?.initial_state) {

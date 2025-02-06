@@ -10,7 +10,7 @@ struct BattleState {
     /// table[position] = (value, editor)
     table: UnorderedMap<String, (u8, String, String)>,
     last_changed_cell: Option<(u8, u8, String, String)>,
-    last_removed_cell: Option<u8>
+    last_removed_cell: Option<(u8, u8, String, String)>
 }
 
 #[app::logic]
@@ -32,7 +32,12 @@ impl BattleState {
     }
 
     pub fn remove_cell(&mut self, position: u8) -> Result<(), StoreError> {
-        self.table.remove(&position.to_string())?;
+        let removed_value = self.table.remove(&position.to_string())?;
+        if removed_value.is_none() {
+            return Ok(())
+        }
+        let removed_value = removed_value.unwrap();
+        self.last_removed_cell = Some((position, removed_value.0, removed_value.1, removed_value.2));
         Ok(())
     }
 
@@ -44,8 +49,8 @@ impl BattleState {
         self.last_changed_cell.clone()
     }
 
-    pub fn get_last_removed_cell(&self) -> Option<u8> {
-        self.last_removed_cell
+    pub fn get_last_removed_cell(&self) -> Option<(u8, u8, String, String)> {
+        self.last_removed_cell.clone()
     }
 
     pub fn get_table(&self) -> Vec<(u8, u8, String, String)> {

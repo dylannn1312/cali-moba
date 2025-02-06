@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import moment from 'moment';
 import { GameSection } from './components/layout/GameSection';
 import { StatusSection } from './components/layout/StatusSection';
-import { Footer } from './components/layout/Footer';
 import { getUniqueSudoku } from './solver/UniqueSudoku';
 import { useSudokuContext } from './context/SudokuContext';
 import { Button, Modal, Typography } from 'antd';
@@ -16,8 +15,6 @@ import Image from 'next/image';
 import { SudokuCaller } from '@/api/calimeroService';
 import { getStoragePanic, StorageKey } from '@/utils/storage';
 import { useAuth } from '@nfid/identitykit/react';
-import { WsSubscriptionsClient } from '@calimero-network/calimero-client';
-import { SetSudokuValueEvent } from '@/types/battle';
 import useSWR from 'swr';
 
 const { Title, Text } = Typography;
@@ -33,6 +30,7 @@ export const SudokuGame = ({
   onVerifySuccess: (txHash: string) => void;
   onClaimSuccess: (txHash: string) => void
 }) => {
+
   /**
    * All the variables for holding state:
    * gameArray: Holds the current state of the game.
@@ -66,6 +64,48 @@ export const SudokuGame = ({
   const sudokuCaller = useRef(new SudokuCaller(getStoragePanic(StorageKey.NODE_URL)));
   const userPrincipal = currentWallet?.principal.toString();
 
+
+
+  let { data: lastChangedCell, error: lastChangedCellErr } = useSWR("get_last_changed_cell", () => sudokuCaller.current.getLastChangedCell(), {
+    refreshInterval: 1000,
+  });
+
+  let { data: lastRemovedCell, error: lastRemovedCellErr } = useSWR("get_last_removed_cell", () => sudokuCaller.current.getLastRemovedCell(), {
+    refreshInterval: 1000,
+  });
+  console.log({lastChangedCell});
+
+  useEffect(() => {
+    if (lastChangedCellErr) {
+      toast.error(JSON.stringify(lastChangedCellErr));
+    }
+    if (lastRemovedCellErr) {
+      toast.error(JSON.stringify(lastRemovedCellErr));
+    }
+  }, [lastChangedCellErr, lastRemovedCellErr]);
+
+  useEffect(() => {
+    if (lastChangedCell && gameArray[lastChangedCell.position] !== lastChangedCell.value.toString() && userPrincipal && lastChangedCell.editor_address !== userPrincipal) {
+      setGameArray((prev) => {
+        let temp = prev.slice();
+        temp[lastChangedCell.position] = lastChangedCell.value.toString();
+        toast.info(`Cell ${lastChangedCell.position} changed to ${lastChangedCell.value} by ${lastChangedCell.editor_name} (${lastChangedCell.editor_address})`);
+        return temp;
+      });
+    }
+  }, [lastChangedCell, setGameArray]);
+
+  useEffect(() => {
+    if (lastRemovedCell && gameArray[lastRemovedCell.position] !== '0' && userPrincipal && lastRemovedCell.editor_address !== userPrincipal) {
+      setGameArray((prev) => {
+        let temp = prev.slice();
+        temp[lastRemovedCell.position] = '0';
+        toast.info(`Cell ${lastRemovedCell.position} removed by ${lastRemovedCell.editor_name} (${lastRemovedCell.editor_address})`);
+        return temp;
+      });
+    }
+  }, [lastRemovedCell, setGameArray]);
+
   const {
     data: battleInfo,
     isLoading: isBattleInfoLoading
@@ -76,7 +116,7 @@ export const SudokuGame = ({
       try {
         if (initArray.length > 0) {
 
-          if (userPrincipal === battleInfo?.creator) {
+          if (userPrincipal && userPrincipal === battleInfo?.creator) {
             const initialState: [number, number][] = [];
             for (let i = 0; i < initArray.length; i++) {
               if (initArray[i] !== '0') {
@@ -145,10 +185,14 @@ export const SudokuGame = ({
       toast.error("Connect wallet first");
       return;
     }
-    toast.info(`${gameArray[index]}, ${value}`);
     if (initArray[index] === '0' && gameArray[index] !== value) {
       try {
-        await sudokuCaller.current.set(index, parseInt(value), userPrincipal);
+        await sudokuCaller.current.setCell({
+          position: index,
+          value: parseInt(value),
+          editor_address: userPrincipal,
+          editor_name: getStoragePanic(StorageKey.NODE_NAME)
+        });
         // Direct copy results in interesting set of problems, investigate more!
         let tempArray = gameArray.slice();
         let tempHistory = history.slice();
@@ -301,49 +345,6 @@ export const SudokuGame = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-
-  const wsClient = useRef(new WsSubscriptionsClient(getStoragePanic(StorageKey.NODE_URL), '/ws'));
-
-  useEffect(() => {
-    async function handle() {
-      if (isUndefined(currentWallet)) {
-        return;
-      }
-
-      // Connect to WebSocket
-      await wsClient.current.connect();
-
-      // Subscribe to application events
-      wsClient.current.subscribe([getStoragePanic(StorageKey.CONTEXT_ID)]);
-
-      // Handle incoming events
-      wsClient.current.addCallback((event) => {
-        switch (event.type) {
-          case 'StateMutation':
-            toast.success(`State updated: ${event.data.newRoot}`);
-            break;
-          case 'ExecutionEvent':
-            const res: SetSudokuValueEvent = JSON.parse(new TextDecoder().decode(new Uint8Array(event.data.events[0].data)));
-            if (res.editor !== userPrincipal) {
-              setGameArray(gameArray.map((value, index) => {
-                return index === res.position ? res.value.toString() : value;
-              }));
-              toast.info(`The player ${res.editor} has set the value ${res.value} at position ${res.position}`);
-            }
-            break;
-        }
-      });
-    }
-
-    handle();
-
-    const wsClientCurrent = wsClient.current;
-    return () => {
-      wsClientCurrent.disconnect();
-    }
-  }, [currentWallet]);
-
   const router = useRouter();
 
   const [gameSolved, setGameSolved] = useState(false);
@@ -355,7 +356,6 @@ export const SudokuGame = ({
   return (
     <>
       <div className={"container"}>
-        {/* <Header onClick={onClickNewGame} /> */}
         <div className="innercontainer">
           <GameSection
             onClick={(indexOfArray: number) => onClickCell(indexOfArray)}
@@ -432,6 +432,9 @@ export const SudokuGame = ({
           {(submittingProof) && <SwishSpinner />}
         </div >
       </Modal >
+      {/* <Button onClick={async() => { let r = await sudokuCaller.current.getLastChangedCell(); toast.info(JSON.stringify(r)); }}>
+        hehe
+      </Button> */}
     </>
   );
 

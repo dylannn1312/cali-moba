@@ -10,6 +10,13 @@ function calimeroClient(nodeUrl: string) {
     );
 }
 
+type CellInfo = {
+    position: number;
+    value: number;
+    editor_address: string;
+    editor_name: string;
+};
+
 export class SudokuCaller {
     private client: JsonRpcClient;
 
@@ -17,19 +24,82 @@ export class SudokuCaller {
         this.client = calimeroClient(nodeUrl);
     }
 
-    async set(position: number, value: number, editor_address: string) {
-        return await this.client.execute({
+    async setCell(info: CellInfo) {
+        let res = await this.client.execute<CellInfo, void>({
             contextId: getStoragePanic(StorageKey.CONTEXT_ID),
-            method: "set",
+            method: "set_cell",
+            argsJson: info,
+            executorPublicKey: getJWTObject().executor_public_key
+        }, {
+            headers: getHeaders()
+        });
+        if (res.error) {
+            throw res.error;
+        }
+    }
+
+    async removeCell(position: number) {
+        let res =  await this.client.execute({
+            contextId: getStoragePanic(StorageKey.CONTEXT_ID),
+            method: "remove_cell",
             argsJson: {
-                position,
-                value,
-                editor_address
+                position
             },
             executorPublicKey: getJWTObject().executor_public_key
         }, {
             headers: getHeaders()
         });
+        if (res.error) {
+            throw res.error;
+        }
+    }
+
+    async getLastChangedCell(): Promise<CellInfo | null> {
+        let res = await this.client.execute<{}, [number, number, string, string] | null>({
+            contextId: getStoragePanic(StorageKey.CONTEXT_ID),
+            method: "get_last_changed_cell",
+            argsJson: {},
+            executorPublicKey: getJWTObject().executor_public_key
+        }, {
+            headers: getHeaders()
+        });
+        console.log({res})
+        if (res.error) {
+            throw res.error;
+        }
+        if (!res.result?.output) {
+            return null;
+        }
+        return {
+            position: res.result.output[0],
+            value: res.result.output[1],
+            editor_address: res.result.output[2],
+            editor_name: res.result.output[3]
+        };
+    }
+
+
+    async getLastRemovedCell(): Promise<CellInfo | null> {
+        let res = await this.client.execute<{}, [number, number, string, string]>({
+            contextId: getStoragePanic(StorageKey.CONTEXT_ID),
+            method: "get_last_removed_cell",
+            argsJson: {},
+            executorPublicKey: getJWTObject().executor_public_key
+        }, {
+            headers: getHeaders()
+        });
+        if (res.error) {
+            throw res.error;
+        }
+        if (!res.result?.output) {
+            return null;
+        }
+        return {
+            position: res.result.output[0],
+            value: res.result.output[1],
+            editor_address: res.result.output[2],
+            editor_name: res.result.output[3]
+        };
     }
 }
 
