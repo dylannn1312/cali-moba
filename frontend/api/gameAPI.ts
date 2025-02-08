@@ -23,7 +23,6 @@ export class GameAPI {
             depositPrice,
             creator: creator.toString()
         });
-        console.log(response);
         return response;
     }
 

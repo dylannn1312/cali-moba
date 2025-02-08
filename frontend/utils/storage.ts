@@ -120,7 +120,7 @@ export function getStoragePanic(key: StorageKey): string {
         }
         return item;
     }
-    throw new Error("Storage not available");
+    return '';
 }
 
 export function getStorage(key: StorageKey): string | null {

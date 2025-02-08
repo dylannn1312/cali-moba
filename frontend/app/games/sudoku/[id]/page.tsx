@@ -66,9 +66,9 @@ export default function SudokuGamePage({ params: {
         setCurrentPage(e.key);
     };
 
-    const [gameStarted, setGameStarted] = useState(true);
+    const [gameStarted, setGameStarted] = useState(false);
     const [waitForStartingGame, setWaitForStartingGame] = useState(false);
-    const [caliLogined, setCaliLogined] = useState(true);
+    const [caliLogined, setCaliLogined] = useState(false);
 
     useEffect(() => {
       if (battleInfo?.initial_state) {

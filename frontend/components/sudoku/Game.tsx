@@ -12,10 +12,13 @@ import { toast } from 'react-toastify';
 import { GameAPI } from '@/api/gameAPI';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { SudokuCaller } from '@/api/calimeroService';
+import { CellInfo, SudokuCaller } from '@/api/calimeroService';
 import { getStoragePanic, StorageKey } from '@/utils/storage';
 import { useAuth } from '@nfid/identitykit/react';
 import useSWR from 'swr';
+import _ from 'lodash';
+import { Principal } from '@dfinity/principal';
+import {shortAddress} from "@/utils/chain";
 
 const { Title, Text } = Typography;
 /**
@@ -65,46 +68,76 @@ export const SudokuGame = ({
   const userPrincipal = currentWallet?.principal.toString();
 
 
+  const {
+    data: votedSolutionPlayers,
+    error: votedSolutionPlayersError,
+  } = useSWR("getVoteSolution", () => sudokuCaller.current.getVoteSolution(), {
+    refreshInterval: 1000
+  })
 
-  let { data: lastChangedCell, error: lastChangedCellErr } = useSWR("get_last_changed_cell", () => sudokuCaller.current.getLastChangedCell(), {
+  let { data: currentSolution, error: getCurrentSolutionErr } = useSWR("getCurrentSolution", () => sudokuCaller.current.getCurrentSolution(), {
     refreshInterval: 1000,
+    errorRetryCount: 5,
+    errorRetryInterval: 500
   });
+  let prevCurrentSolution = useRef<CellInfo[]>([]);
 
-  let { data: lastRemovedCell, error: lastRemovedCellErr } = useSWR("get_last_removed_cell", () => sudokuCaller.current.getLastRemovedCell(), {
+  let { data: removedCells, error: removedCellsErr } = useSWR("getRemovedCells", () => sudokuCaller.current.getRemovedCells(), {
     refreshInterval: 1000,
+    errorRetryCount: 5,
+    errorRetryInterval: 500
   });
-  console.log({lastChangedCell});
+  let prevRemovedCells = useRef<Omit<CellInfo, 'value'>[]>([]);
+
+  // useEffect(() => {
+  //   if (getCurrentSolutionErr) {
+  //     toast.error(JSON.stringify(getCurrentSolutionErr));
+  //   }
+  //   if (removedCellsErr) {
+  //     toast.error(JSON.stringify(removedCellsErr));
+  //   }
+  //   if (votedSolutionPlayersError) {
+  //     toast.error(JSON.stringify(votedSolutionPlayersError));
+  //   }
+  // }, [getCurrentSolutionErr, removedCellsErr, votedSolutionPlayersError]);
 
   useEffect(() => {
-    if (lastChangedCellErr) {
-      toast.error(JSON.stringify(lastChangedCellErr));
+    async function handle() {
+      if (currentSolution && userPrincipal) {
+        if (currentSolution.length > prevCurrentSolution.current.length) {
+          for (let i = prevCurrentSolution.current.length; i < currentSolution.length; i++) {
+            const cellInfo = currentSolution[i];
+            // if (cellInfo.editor_address === userPrincipal) {
+            //   continue;
+            // }
+            await _fillCell(cellInfo.position, cellInfo.value.toString(), false);
+            toast.info(`Cell ${cellInfo.position} was filled with ${cellInfo.value} by ${cellInfo.editor_name} (${cellInfo.editor_address})`);
+          }
+        }
+        prevCurrentSolution.current = currentSolution;
+      }
     }
-    if (lastRemovedCellErr) {
-      toast.error(JSON.stringify(lastRemovedCellErr));
-    }
-  }, [lastChangedCellErr, lastRemovedCellErr]);
+    handle();
+  }, [currentSolution, userPrincipal]);
 
   useEffect(() => {
-    if (lastChangedCell && gameArray[lastChangedCell.position] !== lastChangedCell.value.toString() && userPrincipal && lastChangedCell.editor_address !== userPrincipal) {
-      setGameArray((prev) => {
-        let temp = prev.slice();
-        temp[lastChangedCell.position] = lastChangedCell.value.toString();
-        toast.info(`Cell ${lastChangedCell.position} changed to ${lastChangedCell.value} by ${lastChangedCell.editor_name} (${lastChangedCell.editor_address})`);
-        return temp;
-      });
+    async function handle() {
+      if (removedCells && userPrincipal) {
+        if (removedCells.length > prevRemovedCells.current.length) {
+          for (let i = prevRemovedCells.current.length; i < removedCells.length; i++) {
+            const cellInfo = removedCells[i];
+            // if (cellInfo.editor_address === userPrincipal) {
+            //   continue;
+            // }
+            await _fillCell(cellInfo.position, '0', false);
+            toast.info(`Cell ${cellInfo.position} was removed by ${cellInfo.editor_name} (${cellInfo.editor_address})`);
+          }
+        }
+        prevRemovedCells.current = removedCells;
+      }
     }
-  }, [lastChangedCell, setGameArray]);
-
-  useEffect(() => {
-    if (lastRemovedCell && gameArray[lastRemovedCell.position] !== '0' && userPrincipal && lastRemovedCell.editor_address !== userPrincipal) {
-      setGameArray((prev) => {
-        let temp = prev.slice();
-        temp[lastRemovedCell.position] = '0';
-        toast.info(`Cell ${lastRemovedCell.position} removed by ${lastRemovedCell.editor_name} (${lastRemovedCell.editor_address})`);
-        return temp;
-      });
-    }
-  }, [lastRemovedCell, setGameArray]);
+    handle();
+  }, [removedCells, userPrincipal]);
 
   const {
     data: battleInfo,
@@ -126,14 +159,14 @@ export const SudokuGame = ({
 
             await GameAPI.startGame(initialState, battleId);
           } else {
-            if (battleInfo?.initial_state) {
-              let g = Array(81).fill('0');
-              battleInfo?.initial_state?.forEach(([index, value]) => {
-                g[index] = value.toString();
-              });
-              setGameArray(g);
-              setInitArray(g);
-            }
+            // if (battleInfo?.initial_state) {
+            //   let g = Array(81).fill('0');
+            //   battleInfo?.initial_state?.forEach(([index, value]) => {
+            //     g[index] = value.toString();
+            //   });
+            //   setGameArray(g);
+            //   // setInitArray(g);
+            // }
           }
         }
       } catch (err) {
@@ -141,14 +174,182 @@ export const SudokuGame = ({
       }
     }
     handle();
-  }, [battleId, battleInfo?.creator, battleInfo?.initial_state, initArray, userPrincipal])
+  }, [initArray])
 
 
   /**
    * Creates a new game and initializes the state variables.
    */
   function _createNewGame(e?: React.ChangeEvent<HTMLSelectElement>) {
-    let [temporaryInitArray, temporarySolvedArray] = getUniqueSudoku(difficulty, e);
+    // let [temporaryInitArray, temporarySolvedArray] = getUniqueSudoku(difficulty, e);
+    const { temporaryInitArray, temporarySolvedArray } = {
+      "temporaryInitArray": [
+        "4",
+        "0",
+        "5",
+        "0",
+        "3",
+        "0",
+        "0",
+        "1",
+        "7",
+        "0",
+        "3",
+        "0",
+        "6",
+        "1",
+        "0",
+        "0",
+        "0",
+        "5",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "6",
+        "4",
+        "0",
+        "3",
+        "8",
+        "2",
+        "0",
+        "0",
+        "5",
+        "1",
+        "9",
+        "0",
+        "0",
+        "0",
+        "0",
+        "3",
+        "4",
+        "0",
+        "0",
+        "0",
+        "2",
+        "5",
+        "0",
+        "0",
+        "2",
+        "0",
+        "1",
+        "3",
+        "7",
+        "6",
+        "9",
+        "1",
+        "3",
+        "0",
+        "0",
+        "6",
+        "7",
+        "0",
+        "8",
+        "0",
+        "4",
+        "6",
+        "5",
+        "9",
+        "8",
+        "2",
+        "3",
+        "0",
+        "2",
+        "5",
+        "0",
+        "1",
+        "0",
+        "0",
+        "4",
+        "6",
+        "9"
+      ],
+      "temporarySolvedArray": [
+        "4",
+        "6",
+        "5",
+        "9",
+        "3",
+        "2",
+        "8",
+        "1",
+        "7",
+        "8",
+        "3",
+        "7",
+        "6",
+        "1",
+        "4",
+        "9",
+        "2",
+        "5",
+        "1",
+        "2",
+        "9",
+        "8",
+        "5",
+        "7",
+        "6",
+        "4",
+        "3",
+        "3",
+        "8",
+        "2",
+        "7",
+        "6",
+        "5",
+        "1",
+        "9",
+        "4",
+        "6",
+        "7",
+        "1",
+        "3",
+        "4",
+        "9",
+        "5",
+        "8",
+        "2",
+        "5",
+        "9",
+        "4",
+        "2",
+        "8",
+        "1",
+        "3",
+        "7",
+        "6",
+        "9",
+        "1",
+        "3",
+        "4",
+        "2",
+        "6",
+        "7",
+        "5",
+        "8",
+        "7",
+        "4",
+        "6",
+        "5",
+        "9",
+        "8",
+        "2",
+        "3",
+        "1",
+        "2",
+        "5",
+        "8",
+        "1",
+        "7",
+        "3",
+        "4",
+        "6",
+        "9"
+      ]
+    }
 
     setInitArray(temporaryInitArray);
     setGameArray(temporaryInitArray);
@@ -180,29 +381,41 @@ export const SudokuGame = ({
    * Fills the cell with the given 'value'
    * Used to Fill / Erase as required.
    */
-  async function _fillCell(index: number, value: string) {
+  async function _fillCell(index: number, value: string, callUpdate: boolean = true) {
     if (isUndefined(userPrincipal)) {
       toast.error("Connect wallet first");
       return;
     }
     if (initArray[index] === '0' && gameArray[index] !== value) {
       try {
-        await sudokuCaller.current.setCell({
-          position: index,
-          value: parseInt(value),
-          editor_address: userPrincipal,
-          editor_name: getStoragePanic(StorageKey.NODE_NAME)
-        });
+        if (callUpdate) {
+          if (value === '0') {
+            await sudokuCaller.current.removeCell({
+              position: index,
+              editor_address: userPrincipal,
+              editor_name: getStoragePanic(StorageKey.NODE_NAME)
+            });
+          } else {
+            await sudokuCaller.current.setCell({
+              position: index,
+              value: parseInt(value),
+              editor_address: userPrincipal,
+              editor_name: getStoragePanic(StorageKey.NODE_NAME)
+            });
+          }
+        }
         // Direct copy results in interesting set of problems, investigate more!
-        let tempArray = gameArray.slice();
+        // let tempArray = gameArray.slice();
         let tempHistory = history.slice();
 
         // Can't use tempArray here, due to Side effect below!!
         tempHistory.push(gameArray.slice());
         setHistory(tempHistory);
 
-        tempArray[index] = value;
-        setGameArray(tempArray);
+        // tempArray[index] = value;
+        setGameArray((prev) => {
+          return prev.map((x, i) => (i === index ? value: x));
+        });
 
         if (_isSolved(index, value)) {
           console.log(gameArray);
@@ -374,14 +587,14 @@ export const SudokuGame = ({
       <Modal
         open={gameSolved}
         // destroyOnClose
-        width={600}
+        width={800}
         footer={[]}
         closeIcon={null}
         classNames={{
           content: '!p-0 !rounded-xl !bg-transparent',
         }}
       >
-        <div className="flex flex-col justify-center border-2 border-primary p-8 rounded-xl bg-secondary items-center">
+        <div className="flex flex-col justify-center border-2 border-primary p-8 rounded-xl bg-secondary items-center w-full">
           <Title level={2} className='uppercase text-center'>
             You <Text className='text-primary'>Won</Text> the game
             <Image src={"https://content.imageresizer.com/images/memes/Congratulations-Man-meme-4.jpg"} alt='' width={450} height={200} className='rounded-xl' />
@@ -414,14 +627,55 @@ export const SudokuGame = ({
                     return (
                       <>
                         <div className="flex gap-3 font-bold">
-                          <Button className='py-5 text-muted' onClick={() => handleSolution(true)}>
-                            No, Public my solution to IC Network
+                          <Button className='py-5 text-muted' onClick={() => handleVoteSolution(true)}>
+                            No, Public our solution to IC Network
                           </Button>
-                          <Button type='primary' className='py-5' onClick={() => handleSolution(false)}>
+                          <Button type='primary' className='py-5' onClick={() => handleVoteSolution(false)}>
                             Yeah, Prove it
                           </Button>
                         </div>
-                        <Text className='text-xs text-muted font-semibold mt-2'>*This could take over a few minutes</Text>
+                        <Text className='text-xs text-muted font-semibold mt-2 mb-5'>*This could take over a few minutes</Text>
+                        {votedSolutionPlayers &&
+                          <div className="flex gap-5 mb-8">
+                            <div className="flex flex-col gap-3 flex-1">
+                              <Title level={4} className="!text-green-600 whitespace-nowrap">{votedSolutionPlayers[0].length} players want to public solution</Title>
+                              <div className="w-full bg-gray-600 h-[1px]"></div>
+                              {
+                                      votedSolutionPlayers[0].map((address) => (
+                                          <Text key={address} className="text-muted">{shortAddress(address, 10)} <Text className="font-semibold">(solved {playerSolvedCells(address)}/{currentSolution?.length})</Text></Text>
+                                      ))
+                              }
+                            </div>
+                            <div className="flex flex-col gap-3 flex-1">
+                              <Title level={4} className="text-gray-600 whitespace-nowrap">{votedSolutionPlayers[1].length} players want to hide solution</Title>
+                              <div className="w-full bg-gray-600 h-[1px]"></div>
+                              {
+                                votedSolutionPlayers[1].map((address) => (
+                                    <Text key={address} className="text-muted">{shortAddress(address, 10)} <Text className="font-semibold">(solved {playerSolvedCells(address)}/{currentSolution?.length})</Text></Text>
+                                ))
+                              }
+                            </div>
+                          </div>
+                        }
+                        {
+                          votedSolutionPlayers && battleInfo &&
+                            (
+                                battleInfo.creator === userPrincipal ?
+                                    <Button
+                                        type="primary"
+                                        onClick={() => handleSubmitSolution(votedSolutionPlayers[0].length > votedSolutionPlayers[1].length)}
+                                        className="font-semibold h-[50px] uppercase text-lg"
+                                        disabled={battleInfo.players.length !== votedSolutionPlayers[0].length + votedSolutionPlayers[1].length}
+                                    >
+                                        Submit our solution
+                                    </Button>
+                                    :
+                                    <>
+                                      <SwishSpinner />
+                                      <Text className="text-muted font-semibold text-xl">Waiting for the creator to submit solution</Text>
+                                    </>
+                            )
+                        }
                       </>
                     )
                   })()
@@ -438,19 +692,53 @@ export const SudokuGame = ({
     </>
   );
 
-  async function handleSolution(isPublic: boolean) {
+  async function handleVoteSolution(isPublic: boolean) {
+    if (userPrincipal) {
+      await sudokuCaller.current.voteSolution(isPublic, Principal.fromText(userPrincipal));
+    }
+  }
+
+  async function handleSubmitSolution(isPublic: boolean) {
     privateProof.current = !isPublic;
     try {
+      const {
+        playerContributions,
+        solution
+      } = getPlayerContributions();
       setSubmittingProof(true);
-      await GameAPI.submitBattleProof(battleId, [
-        1, 4, 5, 6, 2, 3, 4, 5, 9, 2, 3, 6, 7, 2, 3, 6, 1, 7, 9, 4, 5, 8, 1, 2, 5, 8, 4, 3, 9,
-        6, 7, 7, 6, 4, 9, 1, 5, 3, 8, 2, 3, 9, 8, 6, 2, 7, 5, 1, 4, 5, 8, 2, 3, 6, 1, 7, 4, 9,
-        6, 1, 3, 7, 9, 4, 8, 2, 5, 9, 4, 7, 5, 8, 2, 1, 3, 6,
-      ], isPublic, []);
+      await GameAPI.submitBattleProof(battleId, solution, isPublic, playerContributions);
       setProofSubmitted(true);
     } catch (error) {
       toast.error(JSON.stringify(error));
     }
     setSubmittingProof(false);
+  }
+
+  function getPlayerContributions() {
+    if (!currentSolution) {
+      throw new Error('No current solution found.');
+    }
+    const solution = currentSolution.sort((a, b) => a.position - b.position).map((x) => x.value);
+    const playerContributions = _.map(_.countBy(currentSolution, (x) => x.editor_address), (counts, player) => ({
+      player: Principal.fromText(player),
+      percent: counts / currentSolution.length
+    }));
+    return {
+      solution,
+      playerContributions
+    }
+  }
+
+  function playerSolvedCells(player: string) {
+    if (!currentSolution) {
+      return 0;
+    }
+    let res = 0;
+    for (const x of currentSolution) {
+      if (x.editor_address === player) {
+        res++;
+      }
+    }
+    return res;
   }
 }

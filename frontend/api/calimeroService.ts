@@ -1,5 +1,6 @@
 import { getStoragePanic, StorageKey } from '@/utils/storage';
 import { JsonRpcClient } from '@calimero-network/calimero-client';
+import { Principal } from '@dfinity/principal';
 import { isUndefined } from 'lodash';
 import { toast } from 'react-toastify';
 
@@ -10,7 +11,7 @@ function calimeroClient(nodeUrl: string) {
     );
 }
 
-type CellInfo = {
+export type CellInfo = {
     position: number;
     value: number;
     editor_address: string;
@@ -38,12 +39,73 @@ export class SudokuCaller {
         }
     }
 
-    async removeCell(position: number) {
-        let res =  await this.client.execute({
+    async removeCell(info: Omit<CellInfo, 'value'>) {
+        let res = await this.client.execute({
             contextId: getStoragePanic(StorageKey.CONTEXT_ID),
             method: "remove_cell",
+            argsJson: info,
+            executorPublicKey: getJWTObject().executor_public_key
+        }, {
+            headers: getHeaders()
+        });
+        if (res.error) {
+            throw res.error;
+        }
+    }
+
+
+    async getRemovedCells(): Promise<Omit<CellInfo, 'value'>[]> {
+        let res = await this.client.execute<{}, [number, string, string][]>({
+            contextId: getStoragePanic(StorageKey.CONTEXT_ID),
+            method: "get_removed_cells",
+            argsJson: {},
+            executorPublicKey: getJWTObject().executor_public_key
+        }, {
+            headers: getHeaders()
+        });
+        if (res.error) {
+            throw res.error;
+        }
+        if (!res.result?.output) {
+            return [];
+        }
+        return res.result.output.map(([position, editor_address, editor_name]) => ({
+            position,
+            editor_address,
+            editor_name
+        }));
+    }
+
+    async getCurrentSolution(): Promise<CellInfo[]> {
+        let res = await this.client.execute<{}, [number, number, string, string][]>({
+            contextId: getStoragePanic(StorageKey.CONTEXT_ID),
+            method: "get_current_solution",
+            argsJson: {},
+            executorPublicKey: getJWTObject().executor_public_key
+        }, {
+            headers: getHeaders()
+        });
+        if (res.error) {
+            throw res.error;
+        }
+        if (!res.result?.output) {
+            return [];
+        }
+        return res.result.output.map(([position, value, editor_address, editor_name]) => ({
+            position,
+            value,
+            editor_address,
+            editor_name
+        }));
+    }
+
+    async voteSolution(isPublic: boolean, caller: Principal): Promise<void> {
+        let res = await this.client.execute<{}, void>({
+            contextId: getStoragePanic(StorageKey.CONTEXT_ID),
+            method: "vote_solution",
             argsJson: {
-                position
+                public: isPublic,
+                caller: caller.toString()
             },
             executorPublicKey: getJWTObject().executor_public_key
         }, {
@@ -54,35 +116,10 @@ export class SudokuCaller {
         }
     }
 
-    async getLastChangedCell(): Promise<CellInfo | null> {
-        let res = await this.client.execute<{}, [number, number, string, string] | null>({
+    async getVoteSolution(): Promise<[string[], string[]]> {
+        let res = await this.client.execute<{}, [string[], string[]]>({
             contextId: getStoragePanic(StorageKey.CONTEXT_ID),
-            method: "get_last_changed_cell",
-            argsJson: {},
-            executorPublicKey: getJWTObject().executor_public_key
-        }, {
-            headers: getHeaders()
-        });
-        console.log({res})
-        if (res.error) {
-            throw res.error;
-        }
-        if (!res.result?.output) {
-            return null;
-        }
-        return {
-            position: res.result.output[0],
-            value: res.result.output[1],
-            editor_address: res.result.output[2],
-            editor_name: res.result.output[3]
-        };
-    }
-
-
-    async getLastRemovedCell(): Promise<CellInfo | null> {
-        let res = await this.client.execute<{}, [number, number, string, string]>({
-            contextId: getStoragePanic(StorageKey.CONTEXT_ID),
-            method: "get_last_removed_cell",
+            method: "get_vote_solution",
             argsJson: {},
             executorPublicKey: getJWTObject().executor_public_key
         }, {
@@ -91,15 +128,7 @@ export class SudokuCaller {
         if (res.error) {
             throw res.error;
         }
-        if (!res.result?.output) {
-            return null;
-        }
-        return {
-            position: res.result.output[0],
-            value: res.result.output[1],
-            editor_address: res.result.output[2],
-            editor_name: res.result.output[3]
-        };
+        return res.result.output ?? [[], []];
     }
 }
 

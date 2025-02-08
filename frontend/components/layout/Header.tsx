@@ -37,7 +37,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md border-b border-gray-400">
       <div className="flex gap-8 items-center h-20 py-5 w-full">
-        <Link href='/' className="mr-auto"><Text className='text-4xl pr-8 text-primary font-extrabold'>Cali Moba</Text></Link>
+        <Link href='/' className="mr-auto"><Text className='text-4xl pr-8 text-primary font-extrabold'>Cali MOBA</Text></Link>
 
         <Menu onClick={onClick} selectedKeys={[currentPage]} mode="horizontal" items={menuItems} className='border-b-transparent min-w-[200px]' />
         <SetupNode />
