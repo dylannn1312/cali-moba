@@ -5,7 +5,6 @@ const nextConfig = {
         ICP_API_HOST: process.env.ICP_API_HOST,
         TOKEN: process.env.TOKEN,
         TOKEN_DECIMALS: parseInt(process.env.TOKEN_DECIMALS),
-        ICP_LEDGER_CANISTER_ID: process.env.ICP_LEDGER_CANISTER_ID,
     },
     images: {
         remotePatterns: [
