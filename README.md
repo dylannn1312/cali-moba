@@ -1,8 +1,6 @@
 # Cali MOBA - Privacy-centric decentralized MOBA game platform
 
-**Cali MOBA** is a full-stack Web3 MOBA gaming platform designed with a **privacy-first** approach. Developed during the  
-**Calimero x ICP Hackathon**, this project pioneers a **revolutionary** paradigm for decentralized strategy games. You  
-can check out my demo video [here](https://www.youtube.com/watch?v=vOgpqev8gVo).
+**Cali MOBA** is a full-stack Web3 MOBA gaming platform designed with a **privacy-first** approach. Developed during the **Calimero x ICP Hackathon**, this project pioneers a **revolutionary** paradigm for decentralized strategy games. You can check out my demo video [here](https://www.youtube.com/watch?v=vOgpqev8gVo).
 
 ![Web overview](docs/web-overview.png)
 
