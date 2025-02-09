@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::error::ContractError;
 use crate::error::ContractError::{InvalidAction, InvalidSolution};
 use crate::game::{GameSolution, PlayerContribution, SudokuGame};
@@ -5,6 +6,7 @@ use crate::logic::check_solution;
 use crate::state::{GlobalState, GAME_STORAGE, OWNER, OWNER_PROFIT, VERIFIER, VK};
 use candid::Principal;
 use ic_cdk::{api, call};
+use ic_ledger_types::{AccountIdentifier, Memo, Tokens, DEFAULT_SUBACCOUNT, MAINNET_LEDGER_CANISTER_ID};
 
 #[cfg_attr(not(feature = "library"), ic_cdk::init)]
 fn instantiate(vk: String, verifier_address: Principal) {
@@ -127,7 +129,9 @@ async fn submit_solution(battle_id: usize, solution: GameSolution, player_contri
     })?;
     
     let verifier = VERIFIER.with_borrow(|v| *v);
-    let initial_state = GAME_STORAGE.with_borrow_mut(|games| {
+    let player_contributions_clone = Arc::new(&player_contributions);
+    
+    let (initial_state, number_of_player, deposit_price) = GAME_STORAGE.with_borrow_mut(|games| {
         let game = games
             .get_mut(battle_id)
             .ok_or(InvalidAction("battle not found".to_string()))?;
@@ -135,7 +139,7 @@ async fn submit_solution(battle_id: usize, solution: GameSolution, player_contri
         if game.winners.is_some() {
             return Err(InvalidAction("the game is overed".to_string()));
         }
-        for player in &player_contributions {
+        for player in player_contributions_clone.iter() {
             if !game.players.contains(&player.player) {
                 return Err(InvalidAction(format!("player {} not joined", player.player)));
             }
@@ -146,7 +150,7 @@ async fn submit_solution(battle_id: usize, solution: GameSolution, player_contri
         if game.initial_state.is_none() {
             return Err(InvalidAction("initial game state is none".to_string()));
         }
-        Ok(game.initial_state.clone().unwrap())
+        Ok((game.initial_state.clone().unwrap(), game.players.len(), game.deposit_price))
     })?;
 
     match &solution {
@@ -165,14 +169,42 @@ async fn submit_solution(battle_id: usize, solution: GameSolution, player_contri
         }
     };
 
+    let total_prize_pool = (number_of_player as u64) * (deposit_price as u64);
+    let mut transferred_token = 0u64;
+    for (i, player) in player_contributions.iter().enumerate() {
+        let amount = if i == player_contributions.len() - 1 {
+            total_prize_pool - transferred_token
+        } else {
+            ((total_prize_pool as f64) * (player.percent as f64)) as u64
+        };
+
+        let transfer_args = ic_ledger_types::TransferArgs {
+            memo: Memo(0),
+            amount: Tokens::from_e8s(amount),
+            fee: Tokens::from_e8s(10_000),
+            from_subaccount: None,
+            to: AccountIdentifier::new(&player.player, &DEFAULT_SUBACCOUNT),
+            created_at_time: None,
+        };
+
+        ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args)
+            .await
+            .map_err(|e| InvalidAction(format!("failed to call ledger: {:?}", e)))?
+            .map_err(|e| InvalidAction(format!("ledger transfer error {:?}", e)))?;
+        
+        transferred_token += amount;
+    }
+    
     GAME_STORAGE.with_borrow_mut(|games| {
         let game = games
             .get_mut(battle_id)
             .ok_or(InvalidAction("battle not found".to_string()))
             .unwrap();
+        
         game.solution = Some(solution);
         game.winners = Some(player_contributions);
     });
+    
     Ok(())
 }
 
