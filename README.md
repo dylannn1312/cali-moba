@@ -100,7 +100,7 @@ git clone https://github.com/dylannn1312/cali-moba
 cd cali-moba
 ```
 
-2. **Deploy ICP canisters**
+#### 2. Deploy ICP canisters
 
 ```bash
 cd contracts
@@ -118,7 +118,7 @@ VERIFYING_KEY_HEX=$(tail -c +3 ../games/sudoku/elf/verifying_key_hex)
 dfx deploy sudoku --argument "(\\"$VERIFYING_KEY_HEX\\", principal \\"$VERIFIER_CANISTER_ID\\")" -y
 ```
 
-3. **Setup Admin Calimero node**
+#### 3.Setup Admin Calimero node
 
 ```bash
 cd cali-application/sudoku/battle
@@ -127,7 +127,7 @@ merod --node-name admin run
 meroctl --node-name admin app install --path res/sudoku_battle.wasm
 ```
 
-4. **Set up environment variables**
+#### 4. Set up environment variables
 
 ```bash
 # In frontend/.env
@@ -147,11 +147,11 @@ SERVICE_FEE=100
 APPLICATION_ID= # Calimero application ID that Admin was installed
 ```
 
-5. **Run backend and frontend**
+#### 5. Run backend and frontend
 
 ```bash
 cd server && cargo run --release
 cd frontend && npm run dev
 ```
 
-6. Access the game at `http://localhost:3000`
+#### 6. Access the game at `http://localhost:3000`
